@@ -1,0 +1,1403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Advanced Settings System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .settings-window {
+            position: absolute;
+            top: 50px;
+            left: 50px;
+            width: 1000px;
+            height: 700px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .settings-header {
+            background: linear-gradient(to right, #E95420, #D44414);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .settings-title {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .settings-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+        
+        .settings-toolbar {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .search-box {
+            flex: 1;
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            font-size: 14px;
+            background: white;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #E95420;
+            box-shadow: 0 0 0 2px rgba(233, 84, 32, 0.2);
+        }
+        
+        .view-toggle {
+            display: flex;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        
+        .view-btn {
+            padding: 8px 12px;
+            border: none;
+            background: white;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.2s;
+        }
+        
+        .view-btn.active {
+            background: #E95420;
+            color: white;
+        }
+        
+        .view-btn:hover:not(.active) {
+            background: #f0f0f0;
+        }
+        
+        .settings-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        .settings-sidebar {
+            width: 280px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+        
+        .category-item {
+            padding: 15px 20px;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .category-item:hover {
+            background: #e9ecef;
+        }
+        
+        .category-item.active {
+            background: #E95420;
+            color: white;
+            border-left: 4px solid #D44414;
+        }
+        
+        .category-icon {
+            font-size: 20px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .category-info {
+            flex: 1;
+        }
+        
+        .category-name {
+            font-weight: 600;
+            margin-bottom: 2px;
+        }
+        
+        .category-desc {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+        
+        .settings-main {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .settings-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .setting-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            transition: all 0.2s;
+        }
+        
+        .setting-item:hover {
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            border-color: #E95420;
+        }
+        
+        .setting-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+        
+        .setting-info {
+            flex: 1;
+        }
+        
+        .setting-name {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+        
+        .setting-desc {
+            color: #666;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        
+        .setting-control {
+            margin-left: 20px;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            width: 50px;
+            height: 24px;
+            background: #ccc;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .toggle-switch.active {
+            background: #E95420;
+        }
+        
+        .toggle-knob {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 20px;
+            height: 20px;
+            background: white;
+            border-radius: 50%;
+            transition: all 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .toggle-switch.active .toggle-knob {
+            left: 28px;
+        }
+        
+        .dropdown-select {
+            padding: 8px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        
+        .dropdown-select:focus {
+            outline: none;
+            border-color: #E95420;
+        }
+        
+        .slider-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 200px;
+        }
+        
+        .slider {
+            flex: 1;
+            height: 4px;
+            background: #ddd;
+            border-radius: 2px;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .slider-track {
+            height: 100%;
+            background: #E95420;
+            border-radius: 2px;
+            transition: width 0.2s;
+        }
+        
+        .slider-thumb {
+            position: absolute;
+            top: -6px;
+            width: 16px;
+            height: 16px;
+            background: #E95420;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .slider-thumb:hover {
+            transform: scale(1.2);
+        }
+        
+        .slider-value {
+            font-weight: 600;
+            color: #333;
+            min-width: 30px;
+            text-align: right;
+        }
+        
+        .color-picker {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .color-picker:hover {
+            border-color: #E95420;
+            transform: scale(1.05);
+        }
+        
+        .setting-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #ffc107;
+            color: #333;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+        
+        .setting-badge.restart {
+            background: #dc3545;
+            color: white;
+        }
+        
+        .setting-badge.advanced {
+            background: #6f42c1;
+            color: white;
+        }
+        
+        .search-results {
+            padding: 20px;
+        }
+        
+        .search-result-item {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .search-result-item:hover {
+            border-color: #E95420;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .search-result-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .search-result-category {
+            color: #666;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+        
+        .search-result-desc {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .settings-footer {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .settings-status {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .settings-actions {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        
+        .btn-primary {
+            background: #E95420;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #D44414;
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28A745;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 3000;
+            display: none;
+            max-width: 300px;
+        }
+        
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification.error {
+            background: #DC3545;
+        }
+        
+        .notification.warning {
+            background: #FFC107;
+            color: #333;
+        }
+        
+        .notification.info {
+            background: #17A2B8;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="settings-window">
+        <!-- Settings Header -->
+        <div class="settings-header">
+            <div class="settings-title">
+                <span>⚙️</span>
+                <span>Kronos OS Settings - Advanced Configuration System</span>
+            </div>
+            <div class="settings-controls">
+                <button class="control-btn minimize">−</button>
+                <button class="control-btn maximize">□</button>
+                <button class="control-btn close">×</button>
+            </div>
+        </div>
+
+        <!-- Settings Toolbar -->
+        <div class="settings-toolbar">
+            <input type="text" class="search-box" placeholder="Search settings..." id="searchBox" oninput="searchSettings()">
+            <div class="view-toggle">
+                <button class="view-btn active" onclick="setViewMode('categories')">📂 Categories</button>
+                <button class="view-btn" onclick="setViewMode('search')">🔍 Search</button>
+                <button class="view-btn" onclick="setViewMode('favorites')">⭐ Favorites</button>
+                <button class="view-btn" onclick="setViewMode('recent')">🕒 Recent</button>
+            </div>
+            <label>
+                <input type="checkbox" id="showAdvanced" onchange="toggleAdvanced()"> Advanced
+            </label>
+        </div>
+
+        <!-- Settings Content -->
+        <div class="settings-content">
+            <!-- Sidebar -->
+            <div class="settings-sidebar" id="settingsSidebar">
+                <div class="category-item active" onclick="selectCategory('appearance')">
+                    <div class="category-icon">🎨</div>
+                    <div class="category-info">
+                        <div class="category-name">Appearance</div>
+                        <div class="category-desc">Theme, wallpaper, visual settings</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('display')">
+                    <div class="category-icon">🖥️</div>
+                    <div class="category-info">
+                        <div class="category-name">Display</div>
+                        <div class="category-desc">Resolution, brightness, monitors</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('audio')">
+                    <div class="category-icon">🔊</div>
+                    <div class="category-info">
+                        <div class="category-name">Audio</div>
+                        <div class="category-desc">Sound, volume, audio devices</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('network')">
+                    <div class="category-icon">🌐</div>
+                    <div class="category-info">
+                        <div class="category-name">Network</div>
+                        <div class="category-desc">WiFi, Ethernet, connections</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('security')">
+                    <div class="category-icon">🔒</div>
+                    <div class="category-info">
+                        <div class="category-name">Security</div>
+                        <div class="category-desc">Firewall, passwords, encryption</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('privacy')">
+                    <div class="category-icon">🛡️</div>
+                    <div class="category-info">
+                        <div class="category-name">Privacy</div>
+                        <div class="category-desc">Data collection, tracking</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('performance')">
+                    <div class="category-icon">⚡</div>
+                    <div class="category-info">
+                        <div class="category-name">Performance</div>
+                        <div class="category-desc">CPU, memory, optimization</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('accessibility')">
+                    <div class="category-icon">♿</div>
+                    <div class="category-info">
+                        <div class="category-name">Accessibility</div>
+                        <div class="category-desc">Screen reader, magnifier</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('input')">
+                    <div class="category-icon">⌨️</div>
+                    <div class="category-info">
+                        <div class="category-name">Keyboard & Mouse</div>
+                        <div class="category-desc">Input devices, shortcuts</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('power')">
+                    <div class="category-icon">🔋</div>
+                    <div class="category-info">
+                        <div class="category-name">Power</div>
+                        <div class="category-desc">Battery, sleep, power saving</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('startup')">
+                    <div class="category-icon">🚀</div>
+                    <div class="category-info">
+                        <div class="category-name">Startup</div>
+                        <div class="category-desc">Boot options, services</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('updates')">
+                    <div class="category-icon">📦</div>
+                    <div class="category-info">
+                        <div class="category-name">Updates</div>
+                        <div class="category-desc">System updates, packages</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('users')">
+                    <div class="category-icon">👤</div>
+                    <div class="category-info">
+                        <div class="category-name">Users</div>
+                        <div class="category-desc">Accounts, permissions</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('system')">
+                    <div class="category-icon">ℹ️</div>
+                    <div class="category-info">
+                        <div class="category-name">System</div>
+                        <div class="category-desc">Hardware, information</div>
+                    </div>
+                </div>
+                <div class="category-item" onclick="selectCategory('developer')">
+                    <div class="category-icon">🛠️</div>
+                    <div class="category-info">
+                        <div class="category-name">Developer</div>
+                        <div class="category-desc">Debug, development tools</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="settings-main" id="settingsMain">
+                <!-- Appearance Settings (Default) -->
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>🎨</span>
+                        <span>Appearance Settings</span>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">Dark Theme</div>
+                                <div class="setting-desc">Use dark colors for the desktop and applications</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="toggle-switch" onclick="toggleSetting(this, 'dark_theme')">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">Desktop Wallpaper</div>
+                                <div class="setting-desc">Choose your desktop background image or color</div>
+                            </div>
+                            <div class="setting-control">
+                                <select class="dropdown-select" onchange="changeSetting('wallpaper', this.value)">
+                                    <option value="ocean-blue">Ocean Blue</option>
+                                    <option value="ubuntu-orange">Ubuntu Orange</option>
+                                    <option value="forest-green">Forest Green</option>
+                                    <option value="sunset-purple">Sunset Purple</option>
+                                    <option value="deep-space">Deep Space</option>
+                                    <option value="cherry-blossom">Cherry Blossom</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">Window Animations</div>
+                                <div class="setting-desc">Enable smooth transitions and effects for windows</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="toggle-switch active" onclick="toggleSetting(this, 'animations')">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">Icon Size</div>
+                                <div class="setting-desc">Size of desktop and application icons</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="slider-container">
+                                    <div class="slider" onclick="setSliderValue(this, event, 'icon_size')">
+                                        <div class="slider-track" style="width: 50%;"></div>
+                                        <div class="slider-thumb" style="left: calc(50% - 8px);"></div>
+                                    </div>
+                                    <div class="slider-value">48px</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">Accent Color</div>
+                                <div class="setting-desc">Primary color used throughout the interface</div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="color-picker" style="background: #E95420;" onclick="openColorPicker('accent_color')"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">Transparency Effects</div>
+                                <div class="setting-desc">Enable translucent windows and blur effects
+                                    <span class="setting-badge advanced">Advanced</span>
+                                </div>
+                            </div>
+                            <div class="setting-control">
+                                <div class="toggle-switch" onclick="toggleSetting(this, 'transparency')">
+                                    <div class="toggle-knob"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Footer -->
+        <div class="settings-footer">
+            <div class="settings-status" id="settingsStatus">
+                Ready • Last saved: Never
+            </div>
+            <div class="settings-actions">
+                <button class="btn btn-secondary" onclick="resetToDefaults()">Reset to Defaults</button>
+                <button class="btn btn-primary" onclick="saveSettings()">Apply Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Settings state
+        let currentCategory = 'appearance';
+        let currentView = 'categories';
+        let showAdvanced = false;
+        let unsavedChanges = false;
+        let settings = {
+            'dark_theme': false,
+            'wallpaper': 'ocean-blue',
+            'animations': true,
+            'icon_size': 48,
+            'accent_color': '#E95420',
+            'transparency': false,
+            'brightness': 80,
+            'auto_brightness': false,
+            'master_volume': 75,
+            'system_sounds': true,
+            'wifi_enabled': true,
+            'firewall_enabled': true,
+            'auto_lock': true,
+            'lock_timeout': 15,
+            'power_mode': 'balanced',
+            'high_contrast': false,
+            'text_size': 100,
+            'key_repeat_delay': 500,
+            'mouse_sensitivity': 50,
+            'sleep_timeout': 30,
+            'auto_check_updates': true,
+            'debug_mode': false
+        };
+
+        // Settings categories data
+        const settingsCategories = {
+            appearance: {
+                title: 'Appearance Settings',
+                icon: '🎨',
+                settings: [
+                    {
+                        name: 'Dark Theme',
+                        key: 'dark_theme',
+                        type: 'toggle',
+                        description: 'Use dark colors for the desktop and applications'
+                    },
+                    {
+                        name: 'Desktop Wallpaper',
+                        key: 'wallpaper',
+                        type: 'dropdown',
+                        description: 'Choose your desktop background image or color',
+                        options: ['Ocean Blue', 'Ubuntu Orange', 'Forest Green', 'Sunset Purple', 'Deep Space', 'Cherry Blossom']
+                    },
+                    {
+                        name: 'Window Animations',
+                        key: 'animations',
+                        type: 'toggle',
+                        description: 'Enable smooth transitions and effects for windows'
+                    },
+                    {
+                        name: 'Icon Size',
+                        key: 'icon_size',
+                        type: 'slider',
+                        description: 'Size of desktop and application icons',
+                        min: 24,
+                        max: 128,
+                        unit: 'px'
+                    },
+                    {
+                        name: 'Accent Color',
+                        key: 'accent_color',
+                        type: 'color',
+                        description: 'Primary color used throughout the interface'
+                    },
+                    {
+                        name: 'Transparency Effects',
+                        key: 'transparency',
+                        type: 'toggle',
+                        description: 'Enable translucent windows and blur effects',
+                        advanced: true
+                    }
+                ]
+            },
+            display: {
+                title: 'Display Settings',
+                icon: '🖥️',
+                settings: [
+                    {
+                        name: 'Screen Resolution',
+                        key: 'resolution',
+                        type: 'dropdown',
+                        description: 'Display resolution setting',
+                        options: ['1920x1080', '1680x1050', '1440x900', '1366x768', '1280x1024', '1024x768'],
+                        restart: true
+                    },
+                    {
+                        name: 'Brightness',
+                        key: 'brightness',
+                        type: 'slider',
+                        description: 'Screen brightness level',
+                        min: 10,
+                        max: 100,
+                        unit: '%'
+                    },
+                    {
+                        name: 'Auto Brightness',
+                        key: 'auto_brightness',
+                        type: 'toggle',
+                        description: 'Automatically adjust brightness based on ambient light'
+                    }
+                ]
+            },
+            audio: {
+                title: 'Audio Settings',
+                icon: '🔊',
+                settings: [
+                    {
+                        name: 'Master Volume',
+                        key: 'master_volume',
+                        type: 'slider',
+                        description: 'System master volume level',
+                        min: 0,
+                        max: 100,
+                        unit: '%'
+                    },
+                    {
+                        name: 'System Sounds',
+                        key: 'system_sounds',
+                        type: 'toggle',
+                        description: 'Play sounds for system events and notifications'
+                    },
+                    {
+                        name: 'Output Device',
+                        key: 'output_device',
+                        type: 'dropdown',
+                        description: 'Audio output device selection',
+                        options: ['Built-in Speakers', 'Headphones', 'HDMI Audio', 'Bluetooth Audio']
+                    }
+                ]
+            },
+            network: {
+                title: 'Network Settings',
+                icon: '🌐',
+                settings: [
+                    {
+                        name: 'WiFi',
+                        key: 'wifi_enabled',
+                        type: 'toggle',
+                        description: 'Enable wireless networking'
+                    },
+                    {
+                        name: 'Ethernet',
+                        key: 'ethernet_enabled',
+                        type: 'toggle',
+                        description: 'Enable wired networking'
+                    },
+                    {
+                        name: 'Firewall',
+                        key: 'firewall_enabled',
+                        type: 'toggle',
+                        description: 'Enable network firewall protection',
+                        restart: true
+                    }
+                ]
+            },
+            security: {
+                title: 'Security Settings',
+                icon: '🔒',
+                settings: [
+                    {
+                        name: 'Auto Lock Screen',
+                        key: 'auto_lock',
+                        type: 'toggle',
+                        description: 'Automatically lock screen when idle'
+                    },
+                    {
+                        name: 'Lock Timeout',
+                        key: 'lock_timeout',
+                        type: 'slider',
+                        description: 'Minutes before auto-lock (0 = disabled)',
+                        min: 0,
+                        max: 120,
+                        unit: 'min'
+                    },
+                    {
+                        name: 'Require Password',
+                        key: 'require_password',
+                        type: 'toggle',
+                        description: 'Password required for login and unlock',
+                        restart: true
+                    }
+                ]
+            },
+            performance: {
+                title: 'Performance Settings',
+                icon: '⚡',
+                settings: [
+                    {
+                        name: 'Power Mode',
+                        key: 'power_mode',
+                        type: 'dropdown',
+                        description: 'System performance and power balance',
+                        options: ['Power Saver', 'Balanced', 'High Performance']
+                    },
+                    {
+                        name: 'Background Apps',
+                        key: 'background_apps',
+                        type: 'toggle',
+                        description: 'Allow apps to run in background'
+                    },
+                    {
+                        name: 'Max Processes',
+                        key: 'max_processes',
+                        type: 'slider',
+                        description: 'Maximum number of concurrent processes',
+                        min: 64,
+                        max: 1024,
+                        unit: '',
+                        advanced: true,
+                        restart: true
+                    }
+                ]
+            }
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateSettingsStatus();
+            showNotification('Settings system loaded successfully!', 'info');
+        });
+
+        // Category selection
+        function selectCategory(category) {
+            currentCategory = category;
+
+            // Update sidebar
+            document.querySelectorAll('.category-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.target.closest('.category-item').classList.add('active');
+
+            // Load category content
+            loadCategorySettings(category);
+        }
+
+        // Load category settings
+        function loadCategorySettings(category) {
+            const categoryData = settingsCategories[category];
+            if (!categoryData) {
+                document.getElementById('settingsMain').innerHTML = `
+                    <div class="settings-section">
+                        <div class="section-title">
+                            <span>⚙️</span>
+                            <span>${category.charAt(0).toUpperCase() + category.slice(1)} Settings</span>
+                        </div>
+                        <div class="setting-item">
+                            <div class="setting-info">
+                                <div class="setting-name">Coming Soon</div>
+                                <div class="setting-desc">This settings category is under development.</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="settings-section">
+                    <div class="section-title">
+                        <span>${categoryData.icon}</span>
+                        <span>${categoryData.title}</span>
+                    </div>
+            `;
+
+            categoryData.settings.forEach(setting => {
+                if (setting.advanced && !showAdvanced) return;
+
+                let badges = '';
+                if (setting.restart) badges += '<span class="setting-badge restart">Restart Required</span>';
+                if (setting.advanced) badges += '<span class="setting-badge advanced">Advanced</span>';
+
+                let control = '';
+                switch (setting.type) {
+                    case 'toggle':
+                        const isActive = settings[setting.key] ? 'active' : '';
+                        control = `
+                            <div class="toggle-switch ${isActive}" onclick="toggleSetting(this, '${setting.key}')">
+                                <div class="toggle-knob"></div>
+                            </div>
+                        `;
+                        break;
+                    case 'dropdown':
+                        const currentValue = settings[setting.key] || setting.options[0];
+                        control = `
+                            <select class="dropdown-select" onchange="changeSetting('${setting.key}', this.value)">
+                                ${setting.options.map(option =>
+                                    `<option value="${option.toLowerCase().replace(/\s+/g, '-')}" ${currentValue === option.toLowerCase().replace(/\s+/g, '-') ? 'selected' : ''}>${option}</option>`
+                                ).join('')}
+                            </select>
+                        `;
+                        break;
+                    case 'slider':
+                        const value = settings[setting.key] || setting.min;
+                        const percentage = ((value - setting.min) / (setting.max - setting.min)) * 100;
+                        control = `
+                            <div class="slider-container">
+                                <div class="slider" onclick="setSliderValue(this, event, '${setting.key}', ${setting.min}, ${setting.max})">
+                                    <div class="slider-track" style="width: ${percentage}%;"></div>
+                                    <div class="slider-thumb" style="left: calc(${percentage}% - 8px);"></div>
+                                </div>
+                                <div class="slider-value">${value}${setting.unit || ''}</div>
+                            </div>
+                        `;
+                        break;
+                    case 'color':
+                        const color = settings[setting.key] || '#E95420';
+                        control = `
+                            <div class="color-picker" style="background: ${color};" onclick="openColorPicker('${setting.key}')"></div>
+                        `;
+                        break;
+                }
+
+                html += `
+                    <div class="setting-item">
+                        <div class="setting-header">
+                            <div class="setting-info">
+                                <div class="setting-name">${setting.name}${badges}</div>
+                                <div class="setting-desc">${setting.description}</div>
+                            </div>
+                            <div class="setting-control">
+                                ${control}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            document.getElementById('settingsMain').innerHTML = html;
+        }
+
+        // Toggle setting
+        function toggleSetting(element, key) {
+            element.classList.toggle('active');
+            settings[key] = element.classList.contains('active');
+            markUnsavedChanges();
+            showNotification(`${key.replace('_', ' ')} ${settings[key] ? 'enabled' : 'disabled'}`, 'info');
+        }
+
+        // Change setting
+        function changeSetting(key, value) {
+            settings[key] = value;
+            markUnsavedChanges();
+            showNotification(`${key.replace('_', ' ')} changed to ${value}`, 'info');
+        }
+
+        // Set slider value
+        function setSliderValue(slider, event, key, min = 0, max = 100) {
+            const rect = slider.getBoundingClientRect();
+            const percentage = Math.max(0, Math.min(100, ((event.clientX - rect.left) / rect.width) * 100));
+            const value = Math.round(min + (percentage / 100) * (max - min));
+
+            settings[key] = value;
+
+            // Update slider visual
+            const track = slider.querySelector('.slider-track');
+            const thumb = slider.querySelector('.slider-thumb');
+            const valueDisplay = slider.parentElement.querySelector('.slider-value');
+
+            track.style.width = percentage + '%';
+            thumb.style.left = `calc(${percentage}% - 8px)`;
+
+            // Update value display
+            const setting = findSettingByKey(key);
+            const unit = setting ? setting.unit || '' : '';
+            valueDisplay.textContent = value + unit;
+
+            markUnsavedChanges();
+            showNotification(`${key.replace('_', ' ')} set to ${value}${unit}`, 'info');
+        }
+
+        // Open color picker
+        function openColorPicker(key) {
+            const colors = ['#E95420', '#4A90E2', '#28A745', '#6F42C1', '#DC3545', '#FFC107', '#17A2B8', '#6C757D'];
+            const currentColor = settings[key];
+
+            let colorIndex = colors.indexOf(currentColor);
+            colorIndex = (colorIndex + 1) % colors.length;
+
+            const newColor = colors[colorIndex];
+            settings[key] = newColor;
+
+            // Update color picker visual
+            event.target.style.background = newColor;
+
+            markUnsavedChanges();
+            showNotification(`Accent color changed to ${newColor}`, 'info');
+        }
+
+        // Find setting by key
+        function findSettingByKey(key) {
+            for (const category in settingsCategories) {
+                const setting = settingsCategories[category].settings.find(s => s.key === key);
+                if (setting) return setting;
+            }
+            return null;
+        }
+
+        // View mode functions
+        function setViewMode(mode) {
+            currentView = mode;
+
+            // Update view buttons
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update content based on view
+            switch (mode) {
+                case 'categories':
+                    document.getElementById('settingsSidebar').style.display = 'block';
+                    loadCategorySettings(currentCategory);
+                    break;
+                case 'search':
+                    performSearch();
+                    break;
+                case 'favorites':
+                    showFavorites();
+                    break;
+                case 'recent':
+                    showRecent();
+                    break;
+            }
+        }
+
+        // Search settings
+        function searchSettings() {
+            const query = document.getElementById('searchBox').value.toLowerCase();
+            if (query.length < 2) return;
+
+            const results = [];
+
+            for (const categoryKey in settingsCategories) {
+                const category = settingsCategories[categoryKey];
+                category.settings.forEach(setting => {
+                    if (setting.name.toLowerCase().includes(query) ||
+                        setting.description.toLowerCase().includes(query)) {
+                        results.push({
+                            setting: setting,
+                            category: category.title,
+                            categoryKey: categoryKey
+                        });
+                    }
+                });
+            }
+
+            displaySearchResults(results, query);
+        }
+
+        // Display search results
+        function displaySearchResults(results, query) {
+            document.getElementById('settingsSidebar').style.display = 'none';
+
+            let html = `
+                <div class="search-results">
+                    <h3>Search Results for "${query}" (${results.length} found)</h3>
+            `;
+
+            results.forEach(result => {
+                html += `
+                    <div class="search-result-item" onclick="goToSetting('${result.categoryKey}', '${result.setting.key}')">
+                        <div class="search-result-title">${result.setting.name}</div>
+                        <div class="search-result-category">${result.category}</div>
+                        <div class="search-result-desc">${result.setting.description}</div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            document.getElementById('settingsMain').innerHTML = html;
+        }
+
+        // Go to specific setting
+        function goToSetting(categoryKey, settingKey) {
+            selectCategory(categoryKey);
+            setViewMode('categories');
+
+            // Highlight the setting
+            setTimeout(() => {
+                const settingItems = document.querySelectorAll('.setting-item');
+                settingItems.forEach(item => {
+                    const settingName = item.querySelector('.setting-name').textContent.toLowerCase();
+                    const targetSetting = findSettingByKey(settingKey);
+                    if (targetSetting && settingName.includes(targetSetting.name.toLowerCase())) {
+                        item.style.border = '2px solid #E95420';
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(() => {
+                            item.style.border = '1px solid #e9ecef';
+                        }, 3000);
+                    }
+                });
+            }, 100);
+        }
+
+        // Show favorites
+        function showFavorites() {
+            document.getElementById('settingsSidebar').style.display = 'none';
+            document.getElementById('settingsMain').innerHTML = `
+                <div class="search-results">
+                    <h3>⭐ Favorite Settings</h3>
+                    <div class="search-result-item">
+                        <div class="search-result-title">Dark Theme</div>
+                        <div class="search-result-category">Appearance</div>
+                        <div class="search-result-desc">Use dark colors for the desktop and applications</div>
+                    </div>
+                    <div class="search-result-item">
+                        <div class="search-result-title">Auto Lock Screen</div>
+                        <div class="search-result-category">Security</div>
+                        <div class="search-result-desc">Automatically lock screen when idle</div>
+                    </div>
+                    <div class="search-result-item">
+                        <div class="search-result-title">Master Volume</div>
+                        <div class="search-result-category">Audio</div>
+                        <div class="search-result-desc">System master volume level</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Show recent settings
+        function showRecent() {
+            document.getElementById('settingsSidebar').style.display = 'none';
+            document.getElementById('settingsMain').innerHTML = `
+                <div class="search-results">
+                    <h3>🕒 Recently Changed Settings</h3>
+                    <div class="search-result-item">
+                        <div class="search-result-title">Window Animations</div>
+                        <div class="search-result-category">Appearance</div>
+                        <div class="search-result-desc">Changed 2 minutes ago</div>
+                    </div>
+                    <div class="search-result-item">
+                        <div class="search-result-title">WiFi</div>
+                        <div class="search-result-category">Network</div>
+                        <div class="search-result-desc">Changed 15 minutes ago</div>
+                    </div>
+                    <div class="search-result-item">
+                        <div class="search-result-title">Brightness</div>
+                        <div class="search-result-category">Display</div>
+                        <div class="search-result-desc">Changed 1 hour ago</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Toggle advanced settings
+        function toggleAdvanced() {
+            showAdvanced = document.getElementById('showAdvanced').checked;
+            loadCategorySettings(currentCategory);
+            showNotification(`Advanced settings ${showAdvanced ? 'shown' : 'hidden'}`, 'info');
+        }
+
+        // Mark unsaved changes
+        function markUnsavedChanges() {
+            unsavedChanges = true;
+            updateSettingsStatus();
+        }
+
+        // Update settings status
+        function updateSettingsStatus() {
+            const status = document.getElementById('settingsStatus');
+            if (unsavedChanges) {
+                status.textContent = 'Unsaved changes • Click Apply to save';
+                status.style.color = '#E95420';
+            } else {
+                status.textContent = 'Ready • All changes saved';
+                status.style.color = '#666';
+            }
+        }
+
+        // Save settings
+        function saveSettings() {
+            // Simulate saving
+            setTimeout(() => {
+                unsavedChanges = false;
+                updateSettingsStatus();
+                showNotification('Settings saved successfully!', 'info');
+            }, 500);
+        }
+
+        // Reset to defaults
+        function resetToDefaults() {
+            if (confirm('Are you sure you want to reset all settings to their default values?')) {
+                // Reset all settings
+                Object.keys(settings).forEach(key => {
+                    switch (key) {
+                        case 'dark_theme':
+                        case 'transparency':
+                        case 'auto_brightness':
+                        case 'debug_mode':
+                            settings[key] = false;
+                            break;
+                        case 'animations':
+                        case 'system_sounds':
+                        case 'wifi_enabled':
+                        case 'firewall_enabled':
+                        case 'auto_lock':
+                        case 'auto_check_updates':
+                            settings[key] = true;
+                            break;
+                        case 'wallpaper':
+                            settings[key] = 'ocean-blue';
+                            break;
+                        case 'power_mode':
+                            settings[key] = 'balanced';
+                            break;
+                        default:
+                            // Reset numeric values to defaults
+                            if (typeof settings[key] === 'number') {
+                                const defaults = {
+                                    icon_size: 48,
+                                    brightness: 80,
+                                    master_volume: 75,
+                                    lock_timeout: 15,
+                                    text_size: 100,
+                                    key_repeat_delay: 500,
+                                    mouse_sensitivity: 50,
+                                    sleep_timeout: 30
+                                };
+                                settings[key] = defaults[key] || 50;
+                            }
+                    }
+                });
+
+                loadCategorySettings(currentCategory);
+                markUnsavedChanges();
+                showNotification('Settings reset to defaults', 'warning');
+            }
+        }
+
+        // Show notification
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // Perform search when view is set to search
+        function performSearch() {
+            const query = document.getElementById('searchBox').value;
+            if (query) {
+                searchSettings();
+            } else {
+                document.getElementById('settingsSidebar').style.display = 'none';
+                document.getElementById('settingsMain').innerHTML = `
+                    <div class="search-results">
+                        <h3>🔍 Search Settings</h3>
+                        <p>Enter a search term in the search box above to find specific settings.</p>
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>

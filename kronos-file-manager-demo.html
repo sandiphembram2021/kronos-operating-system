@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Advanced File Manager</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .file-manager-window {
+            width: 1100px;
+            height: 750px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+        }
+        
+        .file-manager-header {
+            background: linear-gradient(to right, #4A90E2, #357ABD);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .file-manager-title {
+            font-size: 18px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-manager-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+        
+        .file-manager-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .toolbar {
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toolbar-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .toolbar-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .toolbar-btn:hover {
+            background: #5a6268;
+        }
+        
+        .toolbar-btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+        }
+        
+        .toolbar-btn.primary {
+            background: #4A90E2;
+        }
+        
+        .toolbar-btn.primary:hover {
+            background: #357ABD;
+        }
+        
+        .toolbar-btn.success {
+            background: #28a745;
+        }
+        
+        .toolbar-btn.success:hover {
+            background: #218838;
+        }
+        
+        .address-bar {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 6px 10px;
+            flex: 1;
+            max-width: 400px;
+        }
+        
+        .address-bar input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            background: white;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            padding: 6px 10px;
+            width: 250px;
+        }
+        
+        .search-box input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 14px;
+        }
+        
+        .main-content {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+        
+        .sidebar {
+            width: 200px;
+            background: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            overflow-y: auto;
+        }
+        
+        .sidebar-section {
+            padding: 15px 10px;
+        }
+        
+        .sidebar-section h4 {
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 14px;
+        }
+        
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            font-size: 14px;
+            transition: all 0.2s ease;
+        }
+        
+        .sidebar-item:hover {
+            background: #e9ecef;
+        }
+        
+        .sidebar-item.active {
+            background: #4A90E2;
+            color: white;
+        }
+        
+        .file-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .breadcrumb {
+            background: #fff;
+            border-bottom: 1px solid #dee2e6;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        
+        .breadcrumb-item {
+            cursor: pointer;
+            color: #4A90E2;
+            transition: color 0.2s ease;
+        }
+        
+        .breadcrumb-item:hover {
+            color: #357ABD;
+        }
+        
+        .breadcrumb-separator {
+            color: #666;
+            margin: 0 5px;
+        }
+        
+        .file-list {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            background: white;
+        }
+        
+        .file-list-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-bottom: 2px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+        }
+        
+        .file-item:hover {
+            background: #f8f9fa;
+            border-color: #dee2e6;
+        }
+        
+        .file-item.selected {
+            background: #4A90E2;
+            color: white;
+            border-color: #357ABD;
+        }
+        
+        .file-icon {
+            font-size: 24px;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .file-name {
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .file-size {
+            font-size: 12px;
+            color: #666;
+            min-width: 80px;
+            text-align: right;
+        }
+        
+        .file-date {
+            font-size: 12px;
+            color: #666;
+            min-width: 120px;
+            text-align: right;
+        }
+        
+        .status-bar {
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            padding: 8px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: #666;
+        }
+        
+        .demo-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .demo-info h3 {
+            margin-bottom: 10px;
+            color: #4A90E2;
+        }
+        
+        .demo-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .demo-info li {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .demo-info li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #4A90E2;
+        }
+        
+        .context-menu {
+            position: absolute;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            z-index: 1000;
+            min-width: 150px;
+        }
+        
+        .context-menu-item {
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s ease;
+        }
+        
+        .context-menu-item:hover {
+            background: #f8f9fa;
+        }
+        
+        .context-menu-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-info">
+        <h3>📁 File Manager Demo</h3>
+        <ul>
+            <li>Modern file browser interface</li>
+            <li>Directory navigation & breadcrumbs</li>
+            <li>File operations & context menus</li>
+            <li>Search & filtering capabilities</li>
+            <li>Professional file management</li>
+        </ul>
+    </div>
+
+    <div class="file-manager-window">
+        <div class="file-manager-header">
+            <div class="file-manager-title">
+                <span>📁</span>
+                <span>Kronos File Manager - Advanced File Browser</span>
+            </div>
+            <div class="file-manager-controls">
+                <button class="control-btn minimize">−</button>
+                <button class="control-btn maximize">□</button>
+                <button class="control-btn close">×</button>
+            </div>
+        </div>
+
+        <div class="file-manager-content">
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="backBtn" onclick="navigateBack()" disabled>← Back</button>
+                    <button class="toolbar-btn" id="forwardBtn" onclick="navigateForward()" disabled>Forward →</button>
+                    <button class="toolbar-btn" onclick="navigateUp()">↑ Up</button>
+                    <button class="toolbar-btn success" onclick="refreshFiles()">🔄 Refresh</button>
+                </div>
+
+                <div style="flex: 1; display: flex; align-items: center; gap: 10px;">
+                    <div class="address-bar">
+                        <span style="color: #666; font-size: 14px;">📁</span>
+                        <input type="text" id="addressBar" value="/home/user" onkeypress="handleAddressBarEnter(event)">
+                    </div>
+                    <div class="search-box">
+                        <span style="color: #666; font-size: 14px;">🔍</span>
+                        <input type="text" id="searchBox" placeholder="Search files..." oninput="searchFiles(this.value)">
+                    </div>
+                </div>
+
+                <div class="toolbar-group">
+                    <button class="toolbar-btn primary" id="viewModeBtn" onclick="toggleViewMode()">📋 List</button>
+                    <button class="toolbar-btn" style="background: #E95420;" onclick="showNewMenu()">+ New</button>
+                </div>
+            </div>
+
+            <div class="main-content">
+                <div class="sidebar">
+                    <div class="sidebar-section">
+                        <h4>Quick Access</h4>
+                        <div class="sidebar-item active" onclick="navigateToPath('/home/user')" data-path="/home/user">
+                            <span>🏠</span>
+                            <span>Home</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/home/user/Desktop')" data-path="/home/user/Desktop">
+                            <span>🖥️</span>
+                            <span>Desktop</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/home/user/Documents')" data-path="/home/user/Documents">
+                            <span>📄</span>
+                            <span>Documents</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/home/user/Downloads')" data-path="/home/user/Downloads">
+                            <span>📥</span>
+                            <span>Downloads</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/home/user/Pictures')" data-path="/home/user/Pictures">
+                            <span>🖼️</span>
+                            <span>Pictures</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/home/user/Music')" data-path="/home/user/Music">
+                            <span>🎵</span>
+                            <span>Music</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/home/user/Videos')" data-path="/home/user/Videos">
+                            <span>🎬</span>
+                            <span>Videos</span>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-section" style="border-top: 1px solid #dee2e6;">
+                        <h4>Devices</h4>
+                        <div class="sidebar-item" onclick="navigateToPath('/')" data-path="/">
+                            <span>💿</span>
+                            <span>System (C:)</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/media/usb')" data-path="/media/usb">
+                            <span>🔌</span>
+                            <span>USB Drive</span>
+                        </div>
+                        <div class="sidebar-item" onclick="navigateToPath('/media/cdrom')" data-path="/media/cdrom">
+                            <span>💽</span>
+                            <span>CD/DVD</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="file-area">
+                    <div class="breadcrumb" id="breadcrumb">
+                        <span class="breadcrumb-item" onclick="navigateToPath('/')">🏠</span>
+                        <span class="breadcrumb-separator">></span>
+                        <span class="breadcrumb-item" onclick="navigateToPath('/home')">home</span>
+                        <span class="breadcrumb-separator">></span>
+                        <span class="breadcrumb-item" onclick="navigateToPath('/home/user')">user</span>
+                    </div>
+
+                    <div class="file-list" id="fileList">
+                        <!-- Files will be populated here -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="status-bar">
+                <div id="statusText">Ready</div>
+                <div id="fileCount">0 items</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // File Manager State
+        let fileManagerState = {
+            currentPath: '/home/user',
+            viewMode: 'list',
+            selectedFiles: [],
+            history: ['/home/user'],
+            historyIndex: 0,
+            clipboard: null,
+            clipboardOperation: null
+        };
+
+        // Simulated file system
+        const fileSystem = {
+            '/': {
+                type: 'directory',
+                name: 'Root',
+                children: ['home', 'usr', 'var', 'etc', 'media'],
+                size: 0,
+                modified: '2024-01-15 10:30:00'
+            },
+            '/home': {
+                type: 'directory',
+                name: 'home',
+                children: ['user'],
+                size: 0,
+                modified: '2024-01-15 10:30:00'
+            },
+            '/home/user': {
+                type: 'directory',
+                name: 'user',
+                children: ['Desktop', 'Documents', 'Downloads', 'Pictures', 'Music', 'Videos', 'Projects'],
+                size: 0,
+                modified: '2024-01-20 14:25:00'
+            },
+            '/home/user/Desktop': {
+                type: 'directory',
+                name: 'Desktop',
+                children: ['Shortcuts.txt', 'README.md', 'Important Notes.txt'],
+                size: 0,
+                modified: '2024-01-20 09:15:00'
+            },
+            '/home/user/Documents': {
+                type: 'directory',
+                name: 'Documents',
+                children: ['Annual Report.docx', 'Project Proposal.pptx', 'Budget Analysis.xlsx', 'Meeting Notes.txt', 'Research Paper.pdf'],
+                size: 0,
+                modified: '2024-01-19 16:45:00'
+            },
+            '/home/user/Downloads': {
+                type: 'directory',
+                name: 'Downloads',
+                children: ['kronos-installer.deb', 'vacation-photo.jpg', 'user-manual.pdf', 'source-code.zip', 'music-album.zip'],
+                size: 0,
+                modified: '2024-01-21 11:20:00'
+            },
+            '/home/user/Pictures': {
+                type: 'directory',
+                name: 'Pictures',
+                children: ['family-vacation.jpg', 'birthday-party.png', 'desktop-screenshot.png', 'nature-wallpaper.jpg', 'profile-photo.jpg'],
+                size: 0,
+                modified: '2024-01-18 13:30:00'
+            },
+            '/home/user/Music': {
+                type: 'directory',
+                name: 'Music',
+                children: ['favorite-song.mp3', 'classical-music.mp3', 'rock-album', 'jazz-collection', 'my-playlist.m3u'],
+                size: 0,
+                modified: '2024-01-17 20:15:00'
+            },
+            '/home/user/Videos': {
+                type: 'directory',
+                name: 'Videos',
+                children: ['family-movie.mp4', 'coding-tutorial.avi', 'conference-recording.mkv', 'funny-clips.mp4'],
+                size: 0,
+                modified: '2024-01-16 18:45:00'
+            },
+            '/home/user/Projects': {
+                type: 'directory',
+                name: 'Projects',
+                children: ['kronos-os-development', 'personal-website', 'mobile-app', 'data-analysis'],
+                size: 0,
+                modified: '2024-01-21 15:30:00'
+            },
+            // Sample files with realistic names and sizes
+            '/home/user/Desktop/Shortcuts.txt': {
+                type: 'file',
+                name: 'Shortcuts.txt',
+                size: 1024,
+                modified: '2024-01-20 09:15:00',
+                extension: 'txt'
+            },
+            '/home/user/Desktop/README.md': {
+                type: 'file',
+                name: 'README.md',
+                size: 2048,
+                modified: '2024-01-20 09:20:00',
+                extension: 'md'
+            },
+            '/home/user/Desktop/Important Notes.txt': {
+                type: 'file',
+                name: 'Important Notes.txt',
+                size: 3072,
+                modified: '2024-01-20 10:30:00',
+                extension: 'txt'
+            },
+            '/home/user/Documents/Annual Report.docx': {
+                type: 'file',
+                name: 'Annual Report.docx',
+                size: 524288,
+                modified: '2024-01-19 16:45:00',
+                extension: 'docx'
+            },
+            '/home/user/Documents/Project Proposal.pptx': {
+                type: 'file',
+                name: 'Project Proposal.pptx',
+                size: 2097152,
+                modified: '2024-01-19 14:30:00',
+                extension: 'pptx'
+            },
+            '/home/user/Documents/Budget Analysis.xlsx': {
+                type: 'file',
+                name: 'Budget Analysis.xlsx',
+                size: 65536,
+                modified: '2024-01-19 12:15:00',
+                extension: 'xlsx'
+            },
+            '/home/user/Documents/Meeting Notes.txt': {
+                type: 'file',
+                name: 'Meeting Notes.txt',
+                size: 4096,
+                modified: '2024-01-19 16:00:00',
+                extension: 'txt'
+            },
+            '/home/user/Documents/Research Paper.pdf': {
+                type: 'file',
+                name: 'Research Paper.pdf',
+                size: 1048576,
+                modified: '2024-01-19 11:30:00',
+                extension: 'pdf'
+            }
+        };
+
+        // Initialize file manager
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDirectory(fileManagerState.currentPath);
+            updateAddressBar();
+            updateBreadcrumb();
+            updateNavigationButtons();
+            showNotification('File Manager initialized successfully!');
+        });
+
+        function loadDirectory(path) {
+            const directory = fileSystem[path];
+            if (!directory || directory.type !== 'directory') {
+                showNotification('Directory not found', 'error');
+                return;
+            }
+
+            fileManagerState.currentPath = path;
+            fileManagerState.selectedFiles = [];
+
+            const fileList = document.getElementById('fileList');
+            if (!fileList) return;
+
+            loadListView(directory, fileList);
+            updateFileCount(directory.children.length);
+            updateSidebarSelection();
+            updateAddressBar();
+            updateBreadcrumb();
+            updateNavigationButtons();
+        }
+
+        function loadListView(directory, container) {
+            container.innerHTML = `
+                <div class="file-list-header">
+                    <div style="width: 32px;"></div>
+                    <div style="flex: 1;">Name</div>
+                    <div style="min-width: 80px; text-align: right;">Size</div>
+                    <div style="min-width: 120px; text-align: right;">Modified</div>
+                </div>
+            `;
+
+            directory.children.forEach(childName => {
+                const childPath = fileManagerState.currentPath + (fileManagerState.currentPath.endsWith('/') ? '' : '/') + childName;
+                const child = fileSystem[childPath];
+                if (!child) return;
+
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+                fileItem.onclick = () => selectFile(childPath);
+                fileItem.ondblclick = () => openFile(childPath);
+                fileItem.oncontextmenu = (e) => showContextMenu(e, childPath);
+
+                const icon = getFileIcon(child);
+                const size = child.type === 'directory' ? '-' : formatFileSize(child.size);
+
+                fileItem.innerHTML = `
+                    <div class="file-icon">${icon}</div>
+                    <div class="file-info">
+                        <div class="file-name">${child.name}</div>
+                    </div>
+                    <div class="file-size">${size}</div>
+                    <div class="file-date">${child.modified}</div>
+                `;
+
+                container.appendChild(fileItem);
+            });
+        }
+
+        function getFileIcon(file) {
+            if (file.type === 'directory') {
+                return '📁';
+            }
+
+            const ext = file.extension?.toLowerCase();
+            const iconMap = {
+                'txt': '📄',
+                'md': '📝',
+                'docx': '📄',
+                'pptx': '📊',
+                'xlsx': '📈',
+                'pdf': '📕',
+                'jpg': '🖼️',
+                'jpeg': '🖼️',
+                'png': '🖼️',
+                'gif': '🖼️',
+                'mp3': '🎵',
+                'mp4': '🎬',
+                'avi': '🎬',
+                'mkv': '🎬',
+                'zip': '📦',
+                'deb': '📦',
+                'm3u': '🎵'
+            };
+
+            return iconMap[ext] || '📄';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // Navigation Functions
+        function navigateToPath(path) {
+            if (fileSystem[path]) {
+                if (fileManagerState.historyIndex === fileManagerState.history.length - 1) {
+                    fileManagerState.history.push(path);
+                    fileManagerState.historyIndex++;
+                } else {
+                    fileManagerState.history = fileManagerState.history.slice(0, fileManagerState.historyIndex + 1);
+                    fileManagerState.history.push(path);
+                    fileManagerState.historyIndex++;
+                }
+
+                loadDirectory(path);
+                showNotification(`Navigated to ${path}`, 'info');
+            }
+        }
+
+        function navigateBack() {
+            if (fileManagerState.historyIndex > 0) {
+                fileManagerState.historyIndex--;
+                loadDirectory(fileManagerState.history[fileManagerState.historyIndex]);
+                showNotification('Navigated back', 'info');
+            }
+        }
+
+        function navigateForward() {
+            if (fileManagerState.historyIndex < fileManagerState.history.length - 1) {
+                fileManagerState.historyIndex++;
+                loadDirectory(fileManagerState.history[fileManagerState.historyIndex]);
+                showNotification('Navigated forward', 'info');
+            }
+        }
+
+        function navigateUp() {
+            const currentPath = fileManagerState.currentPath;
+            if (currentPath === '/') return;
+
+            const parentPath = currentPath.substring(0, currentPath.lastIndexOf('/')) || '/';
+            navigateToPath(parentPath);
+        }
+
+        function refreshFiles() {
+            loadDirectory(fileManagerState.currentPath);
+            showNotification('Files refreshed', 'success');
+        }
+
+        function updateNavigationButtons() {
+            const backBtn = document.getElementById('backBtn');
+            const forwardBtn = document.getElementById('forwardBtn');
+
+            if (backBtn) backBtn.disabled = fileManagerState.historyIndex <= 0;
+            if (forwardBtn) forwardBtn.disabled = fileManagerState.historyIndex >= fileManagerState.history.length - 1;
+        }
+
+        function updateAddressBar() {
+            const addressBar = document.getElementById('addressBar');
+            if (addressBar) {
+                addressBar.value = fileManagerState.currentPath;
+            }
+        }
+
+        function updateBreadcrumb() {
+            const breadcrumb = document.getElementById('breadcrumb');
+            if (!breadcrumb) return;
+
+            const pathParts = fileManagerState.currentPath.split('/').filter(part => part);
+            let currentPath = '';
+
+            breadcrumb.innerHTML = `
+                <span class="breadcrumb-item" onclick="navigateToPath('/')">🏠</span>
+            `;
+
+            pathParts.forEach((part, index) => {
+                currentPath += '/' + part;
+                breadcrumb.innerHTML += `
+                    <span class="breadcrumb-separator">></span>
+                    <span class="breadcrumb-item" onclick="navigateToPath('${currentPath}')">${part}</span>
+                `;
+            });
+        }
+
+        function updateSidebarSelection() {
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+                if (item.dataset.path === fileManagerState.currentPath) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        function updateFileCount(count) {
+            const fileCount = document.getElementById('fileCount');
+            if (fileCount) {
+                fileCount.textContent = `${count} item${count !== 1 ? 's' : ''}`;
+            }
+        }
+
+        function handleAddressBarEnter(event) {
+            if (event.key === 'Enter') {
+                const path = event.target.value;
+                if (fileSystem[path]) {
+                    navigateToPath(path);
+                } else {
+                    showNotification('Path not found', 'error');
+                    updateAddressBar();
+                }
+            }
+        }
+
+        // File Operations
+        function selectFile(path) {
+            const fileItems = document.querySelectorAll('.file-item');
+            fileItems.forEach(item => item.classList.remove('selected'));
+
+            const clickedItem = event.currentTarget;
+            clickedItem.classList.add('selected');
+
+            fileManagerState.selectedFiles = [path];
+
+            const file = fileSystem[path];
+            if (file) {
+                document.getElementById('statusText').textContent = `Selected: ${file.name}`;
+            }
+        }
+
+        function openFile(path) {
+            const file = fileSystem[path];
+            if (!file) return;
+
+            if (file.type === 'directory') {
+                navigateToPath(path);
+            } else {
+                const ext = file.extension?.toLowerCase();
+                if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) {
+                    showNotification(`Opening image: ${file.name}`, 'success');
+                } else if (['mp3', 'mp4', 'avi', 'mkv'].includes(ext)) {
+                    showNotification(`Opening media: ${file.name}`, 'success');
+                } else if (['txt', 'md'].includes(ext)) {
+                    showNotification(`Opening text file: ${file.name}`, 'success');
+                } else {
+                    showNotification(`Opening file: ${file.name}`, 'success');
+                }
+            }
+        }
+
+        function toggleViewMode() {
+            const viewModeBtn = document.getElementById('viewModeBtn');
+
+            if (fileManagerState.viewMode === 'list') {
+                fileManagerState.viewMode = 'grid';
+                viewModeBtn.innerHTML = '⊞ Grid';
+                showNotification('Switched to grid view', 'info');
+            } else {
+                fileManagerState.viewMode = 'list';
+                viewModeBtn.innerHTML = '📋 List';
+                showNotification('Switched to list view', 'info');
+            }
+
+            loadDirectory(fileManagerState.currentPath);
+        }
+
+        function searchFiles(query) {
+            if (!query.trim()) {
+                loadDirectory(fileManagerState.currentPath);
+                return;
+            }
+
+            const directory = fileSystem[fileManagerState.currentPath];
+            if (!directory) return;
+
+            const filteredChildren = directory.children.filter(childName =>
+                childName.toLowerCase().includes(query.toLowerCase())
+            );
+
+            const filteredDirectory = {
+                ...directory,
+                children: filteredChildren
+            };
+
+            const fileList = document.getElementById('fileList');
+            loadListView(filteredDirectory, fileList);
+
+            updateFileCount(filteredChildren.length);
+            document.getElementById('statusText').textContent = `Search results for "${query}" (${filteredChildren.length} found)`;
+        }
+
+        function showContextMenu(event, path) {
+            event.preventDefault();
+
+            const existingMenu = document.querySelector('.context-menu');
+            if (existingMenu) {
+                existingMenu.remove();
+            }
+
+            const file = fileSystem[path];
+            if (!file) return;
+
+            const contextMenu = document.createElement('div');
+            contextMenu.className = 'context-menu';
+            contextMenu.style.left = event.pageX + 'px';
+            contextMenu.style.top = event.pageY + 'px';
+
+            const menuItems = [
+                { text: '📂 Open', action: () => openFile(path) },
+                { text: '📋 Copy', action: () => copyFile(path) },
+                { text: '✂️ Cut', action: () => cutFile(path) },
+                { text: '🗑️ Delete', action: () => deleteFile(path) },
+                { text: '✏️ Rename', action: () => renameFile(path) },
+                { text: '📊 Properties', action: () => showFileProperties(path) }
+            ];
+
+            menuItems.forEach(item => {
+                const menuItem = document.createElement('div');
+                menuItem.className = 'context-menu-item';
+                menuItem.textContent = item.text;
+                menuItem.onclick = () => {
+                    item.action();
+                    contextMenu.remove();
+                };
+                contextMenu.appendChild(menuItem);
+            });
+
+            document.body.appendChild(contextMenu);
+
+            setTimeout(() => {
+                document.addEventListener('click', function removeMenu() {
+                    if (document.body.contains(contextMenu)) {
+                        contextMenu.remove();
+                    }
+                    document.removeEventListener('click', removeMenu);
+                });
+            }, 0);
+        }
+
+        function showNewMenu() {
+            showNotification('📁 New file/folder creation dialog would open here', 'info');
+        }
+
+        function copyFile(path) {
+            fileManagerState.clipboard = path;
+            fileManagerState.clipboardOperation = 'copy';
+            const file = fileSystem[path];
+            showNotification(`📋 Copied: ${file.name}`, 'success');
+        }
+
+        function cutFile(path) {
+            fileManagerState.clipboard = path;
+            fileManagerState.clipboardOperation = 'cut';
+            const file = fileSystem[path];
+            showNotification(`✂️ Cut: ${file.name}`, 'success');
+        }
+
+        function deleteFile(path) {
+            const file = fileSystem[path];
+            if (confirm(`🗑️ Are you sure you want to delete "${file.name}"?`)) {
+                showNotification(`🗑️ Deleted: ${file.name}`, 'success');
+            }
+        }
+
+        function renameFile(path) {
+            const file = fileSystem[path];
+            const newName = prompt('✏️ Enter new name:', file.name);
+            if (newName && newName !== file.name) {
+                showNotification(`✏️ Renamed "${file.name}" to "${newName}"`, 'success');
+            }
+        }
+
+        function showFileProperties(path) {
+            const file = fileSystem[path];
+            const size = file.type === 'directory' ? 'Folder' : formatFileSize(file.size);
+
+            alert(`📊 Properties of ${file.name}:\n\n📁 Type: ${file.type}\n📏 Size: ${size}\n📅 Modified: ${file.modified}\n📍 Path: ${path}`);
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            console.log(`${type.toUpperCase()}: ${message}`);
+
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: ${type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#4A90E2'};
+                color: white;
+                padding: 12px 24px;
+                border-radius: 6px;
+                z-index: 10000;
+                font-size: 14px;
+                font-weight: 500;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideDown 0.3s ease;
+                max-width: 400px;
+                text-align: center;
+            `;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideUp 0.3s ease';
+                setTimeout(() => {
+                    if (document.body.contains(notification)) {
+                        document.body.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
+        }
+
+        // Add CSS animations
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideDown {
+                from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+                to { transform: translateX(-50%) translateY(0); opacity: 1; }
+            }
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

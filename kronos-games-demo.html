@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Built-in Games Collection</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .games-window {
+            width: 1200px;
+            height: 800px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #ddd;
+        }
+        
+        .games-header {
+            background: linear-gradient(to right, #E95420, #D44414);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .games-title {
+            font-size: 20px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .games-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+        
+        .games-content {
+            flex: 1;
+            padding: 30px;
+            overflow-y: auto;
+        }
+        
+        .games-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .game-card {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .game-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .game-card:hover::before {
+            left: 100%;
+        }
+        
+        .game-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .game-card[data-game="snake"] {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+        }
+        
+        .game-card[data-game="tetris"] {
+            background: linear-gradient(135deg, #2196F3, #1976D2);
+        }
+        
+        .game-card[data-game="pong"] {
+            background: linear-gradient(135deg, #FF9800, #F57C00);
+        }
+        
+        .game-card[data-game="minesweeper"] {
+            background: linear-gradient(135deg, #F44336, #D32F2F);
+        }
+        
+        .game-card[data-game="chess"] {
+            background: linear-gradient(135deg, #795548, #5D4037);
+        }
+        
+        .game-card[data-game="solitaire"] {
+            background: linear-gradient(135deg, #9C27B0, #7B1FA2);
+        }
+        
+        .game-icon {
+            font-size: 60px;
+            margin-bottom: 20px;
+            display: block;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+        }
+        
+        .game-card h3 {
+            margin: 15px 0 10px 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        
+        .game-card p {
+            margin: 0 0 15px 0;
+            opacity: 0.9;
+            font-size: 16px;
+            line-height: 1.4;
+        }
+        
+        .game-stats {
+            font-size: 14px;
+            opacity: 0.8;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            margin-top: 10px;
+        }
+        
+        .stats-section {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .stats-card {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #e9ecef;
+        }
+        
+        .stats-card h4 {
+            margin-bottom: 20px;
+            color: #333;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        .stat-item {
+            font-size: 14px;
+            color: #666;
+        }
+        
+        .stat-value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .achievements {
+            background: #e8f5e8;
+            border-radius: 12px;
+            padding: 25px;
+            border: 1px solid #c3e6c3;
+        }
+        
+        .achievement-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .achievement-icon {
+            font-size: 16px;
+        }
+        
+        .demo-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .demo-info h3 {
+            margin-bottom: 10px;
+            color: #E95420;
+        }
+        
+        .demo-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .demo-info li {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .demo-info li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #E95420;
+        }
+        
+        .play-button {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin-top: 15px;
+        }
+        
+        .play-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: white;
+            transform: scale(1.05);
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #28a745;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 6px;
+            z-index: 10000;
+            font-size: 14px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-info">
+        <h3>🎮 Games Collection Demo</h3>
+        <ul>
+            <li>6 classic games included</li>
+            <li>Full gameplay mechanics</li>
+            <li>Score tracking & statistics</li>
+            <li>Professional game interfaces</li>
+            <li>Retro gaming experience</li>
+        </ul>
+    </div>
+
+    <div class="games-window">
+        <div class="games-header">
+            <div class="games-title">
+                <span>🎮</span>
+                <span>Kronos Games - Built-in Entertainment Collection</span>
+            </div>
+            <div class="games-controls">
+                <button class="control-btn minimize">−</button>
+                <button class="control-btn maximize">□</button>
+                <button class="control-btn close">×</button>
+            </div>
+        </div>
+
+        <div class="games-content">
+            <h2 style="text-align: center; margin-bottom: 30px; color: #333; font-size: 28px;">
+                🎯 Choose Your Game
+            </h2>
+
+            <div class="games-grid">
+                <div class="game-card" data-game="snake" onclick="launchGame('snake')">
+                    <div class="game-icon">🐍</div>
+                    <h3>Snake Game</h3>
+                    <p>Classic arcade game where you control a growing snake to eat food while avoiding walls and yourself.</p>
+                    <div class="game-stats">Best Score: 1,250 pts</div>
+                    <button class="play-button">🎮 Play Now</button>
+                </div>
+
+                <div class="game-card" data-game="tetris" onclick="launchGame('tetris')">
+                    <div class="game-icon">🧩</div>
+                    <h3>Tetris</h3>
+                    <p>Arrange falling blocks to create complete lines. Clear lines to score points and increase your level.</p>
+                    <div class="game-stats">Best Score: 45,600 pts</div>
+                    <button class="play-button">🎮 Play Now</button>
+                </div>
+
+                <div class="game-card" data-game="pong" onclick="launchGame('pong')">
+                    <div class="game-icon">🏓</div>
+                    <h3>Pong</h3>
+                    <p>The classic paddle game! Control your paddle to hit the ball past your opponent. First to 5 wins!</p>
+                    <div class="game-stats">Best Streak: 21 wins</div>
+                    <button class="play-button">🎮 Play Now</button>
+                </div>
+
+                <div class="game-card" data-game="minesweeper" onclick="launchGame('minesweeper')">
+                    <div class="game-icon">💣</div>
+                    <h3>Minesweeper</h3>
+                    <p>Use logic to find all hidden mines. Click to reveal squares, right-click to flag suspected mines.</p>
+                    <div class="game-stats">Best Time: 89 seconds</div>
+                    <button class="play-button">🎮 Play Now</button>
+                </div>
+
+                <div class="game-card" data-game="chess" onclick="launchGame('chess')">
+                    <div class="game-icon">♟️</div>
+                    <h3>Chess</h3>
+                    <p>The ultimate strategy game. Move your pieces wisely to checkmate your opponent's king.</p>
+                    <div class="game-stats">Rating: 1,450 ELO</div>
+                    <button class="play-button">🎮 Play Now</button>
+                </div>
+
+                <div class="game-card" data-game="solitaire" onclick="launchGame('solitaire')">
+                    <div class="game-icon">🃏</div>
+                    <h3>Solitaire</h3>
+                    <p>Classic card game. Move all cards to foundation piles, building from Ace to King by suit.</p>
+                    <div class="game-stats">Win Rate: 78%</div>
+                    <button class="play-button">🎮 Play Now</button>
+                </div>
+            </div>
+
+            <div class="stats-section">
+                <div class="stats-card">
+                    <h4>
+                        <span>📊</span>
+                        <span>Gaming Statistics</span>
+                    </h4>
+                    <div class="stats-grid">
+                        <div class="stat-item">
+                            Total Games Played: <span class="stat-value">247</span>
+                        </div>
+                        <div class="stat-item">
+                            Total Score: <span class="stat-value">156,420</span>
+                        </div>
+                        <div class="stat-item">
+                            Time Played: <span class="stat-value">12h 45m</span>
+                        </div>
+                        <div class="stat-item">
+                            Achievements: <span class="stat-value">15/24</span>
+                        </div>
+                        <div class="stat-item">
+                            Favorite Game: <span class="stat-value">Snake</span>
+                        </div>
+                        <div class="stat-item">
+                            Win Streak: <span class="stat-value">8 games</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="achievements">
+                    <h4>
+                        <span>🏆</span>
+                        <span>Recent Achievements</span>
+                    </h4>
+                    <div class="achievement-item">
+                        <span class="achievement-icon">🐍</span>
+                        <span><strong>Snake Master</strong> - Score 1000+ points in Snake Game</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span class="achievement-icon">🧩</span>
+                        <span><strong>Tetris Pro</strong> - Clear 10 lines at once in Tetris</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span class="achievement-icon">⚡</span>
+                        <span><strong>Speed Demon</strong> - Win Pong match in under 30 seconds</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span class="achievement-icon">🧠</span>
+                        <span><strong>Logic Expert</strong> - Solve Expert Minesweeper puzzle</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span class="achievement-icon">♟️</span>
+                        <span><strong>Chess Champion</strong> - Win 5 consecutive chess games</span>
+                    </div>
+                    <div class="achievement-item">
+                        <span class="achievement-icon">🃏</span>
+                        <span><strong>Card Shark</strong> - Complete Solitaire in under 2 minutes</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Games Demo JavaScript
+        const gameDescriptions = {
+            snake: {
+                title: "Snake Game",
+                description: "Navigate your snake to eat food and grow longer. Avoid hitting walls or yourself!",
+                controls: "Use WASD or Arrow Keys to move",
+                objective: "Eat food to grow and score points"
+            },
+            tetris: {
+                title: "Tetris",
+                description: "Arrange falling blocks to create complete horizontal lines.",
+                controls: "A/D to move, S to drop, W to rotate",
+                objective: "Clear lines to score points and level up"
+            },
+            pong: {
+                title: "Pong",
+                description: "Classic paddle game against AI opponent.",
+                controls: "W/S or Arrow Keys to move paddle",
+                objective: "First player to score 5 points wins"
+            },
+            minesweeper: {
+                title: "Minesweeper",
+                description: "Use logic to find all hidden mines on the grid.",
+                controls: "Left click to reveal, right click to flag",
+                objective: "Reveal all safe squares without hitting mines"
+            },
+            chess: {
+                title: "Chess",
+                description: "Strategic board game with classic piece movements.",
+                controls: "Click piece then click destination",
+                objective: "Checkmate your opponent's king"
+            },
+            solitaire: {
+                title: "Solitaire",
+                description: "Classic card game with foundation building.",
+                controls: "Click and drag cards to move them",
+                objective: "Move all cards to foundation piles"
+            }
+        };
+
+        function launchGame(gameName) {
+            const game = gameDescriptions[gameName];
+
+            showNotification(`🎮 Launching ${game.title}...`);
+
+            // Add visual feedback
+            const card = document.querySelector(`[data-game="${gameName}"]`);
+            card.style.transform = 'scale(0.95)';
+
+            setTimeout(() => {
+                card.style.transform = '';
+                showGameInfo(gameName);
+            }, 200);
+        }
+
+        function showGameInfo(gameName) {
+            const game = gameDescriptions[gameName];
+
+            const infoHtml = `
+                <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 10000; display: flex; align-items: center; justify-content: center;" onclick="closeGameInfo()">
+                    <div style="background: white; padding: 40px; border-radius: 15px; max-width: 500px; text-align: center;" onclick="event.stopPropagation()">
+                        <h2 style="margin-bottom: 20px; color: #333;">${game.title}</h2>
+                        <p style="margin-bottom: 20px; color: #666; line-height: 1.6;">${game.description}</p>
+
+                        <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px; text-align: left;">
+                            <h4 style="margin-bottom: 10px; color: #333;">How to Play:</h4>
+                            <p style="margin-bottom: 10px; color: #666;"><strong>Controls:</strong> ${game.controls}</p>
+                            <p style="color: #666;"><strong>Objective:</strong> ${game.objective}</p>
+                        </div>
+
+                        <div style="display: flex; gap: 15px; justify-content: center;">
+                            <button onclick="startGame('${gameName}')" style="background: #E95420; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px; font-weight: bold;">
+                                🎮 Start Game
+                            </button>
+                            <button onclick="closeGameInfo()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-size: 16px;">
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', infoHtml);
+        }
+
+        function closeGameInfo() {
+            const overlay = document.querySelector('[style*="position: fixed"]');
+            if (overlay) {
+                overlay.remove();
+            }
+        }
+
+        function startGame(gameName) {
+            closeGameInfo();
+            showNotification(`🚀 ${gameDescriptions[gameName].title} is starting!`);
+
+            // Simulate game launch
+            setTimeout(() => {
+                showNotification(`🎯 ${gameDescriptions[gameName].title} is now running! Have fun!`);
+            }, 1500);
+        }
+
+        function showNotification(message) {
+            // Remove existing notification
+            const existing = document.querySelector('.notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create new notification
+            const notification = document.createElement('div');
+            notification.className = 'notification';
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            // Auto-remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.style.animation = 'slideUp 0.3s ease';
+                    setTimeout(() => {
+                        if (notification.parentNode) {
+                            notification.remove();
+                        }
+                    }, 300);
+                }
+            }, 3000);
+        }
+
+        // Add CSS for slide up animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideUp {
+                from { transform: translateX(-50%) translateY(0); opacity: 1; }
+                to { transform: translateX(-50%) translateY(-100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Initialize demo
+        document.addEventListener('DOMContentLoaded', function() {
+            showNotification('🎮 Kronos Games Collection loaded successfully!');
+
+            // Add hover effects to game cards
+            document.querySelectorAll('.game-card').forEach(card => {
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-10px) scale(1.02)';
+                });
+
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = '';
+                });
+            });
+        });
+
+        // Prevent button clicks from triggering card clicks
+        document.querySelectorAll('.play-button').forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.stopPropagation();
+            });
+        });
+    </script>
+</body>
+</html>

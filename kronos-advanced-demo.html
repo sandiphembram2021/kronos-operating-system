@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Advanced Ubuntu-like Operating System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            height: 100vh;
+        }
+
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .boot-screen.hidden {
+            display: none;
+        }
+
+        .boot-logo {
+            font-size: 48px;
+            color: #E95420;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .boot-text {
+            font-size: 14px;
+            line-height: 1.5;
+            max-width: 800px;
+            text-align: left;
+        }
+
+        .desktop {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        }
+
+        .desktop-icon {
+            position: absolute;
+            width: 64px;
+            height: 80px;
+            cursor: pointer;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            transform: scale(1.05);
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: linear-gradient(to bottom, #772953, #5d1f3f);
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .start-button {
+            background: linear-gradient(to bottom, #E95420, #D44414);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s ease;
+        }
+
+        .start-button:hover {
+            background: linear-gradient(to bottom, #D44414, #C23D0F);
+            transform: translateY(-1px);
+        }
+
+        .taskbar-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-right: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+        }
+
+        .taskbar-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .taskbar-item.active {
+            background: rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .system-tray {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+            gap: 16px;
+        }
+
+        .window {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            min-width: 400px;
+            min-height: 300px;
+            display: none;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .window.active {
+            display: block;
+            z-index: 1000;
+        }
+
+        .window-header {
+            background: linear-gradient(to bottom, #E95420, #D44414);
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .window-title {
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-control {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            transition: all 0.2s ease;
+        }
+
+        .window-control:hover {
+            transform: scale(1.1);
+        }
+
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+
+        .window-content {
+            padding: 16px;
+            height: calc(100% - 40px);
+            overflow: auto;
+        }
+
+        .start-menu {
+            position: fixed;
+            bottom: 48px;
+            left: 8px;
+            width: 350px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 2000;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .start-menu.show {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .start-menu-header {
+            background: linear-gradient(to bottom, #E95420, #D44414);
+            color: white;
+            padding: 16px;
+            font-weight: bold;
+            font-size: 18px;
+        }
+
+        .start-menu-section {
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .start-menu-section:last-child {
+            border-bottom: none;
+        }
+
+        .start-menu-section-title {
+            padding: 8px 16px;
+            font-weight: bold;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+
+        .start-menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: background 0.2s ease;
+        }
+
+        .start-menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .start-menu-item-icon {
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .terminal {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 16px;
+            height: 100%;
+            overflow-y: auto;
+            font-size: 14px;
+        }
+
+        .terminal-line {
+            margin: 2px 0;
+            white-space: pre-wrap;
+        }
+
+        .terminal-prompt {
+            color: #00ff00;
+        }
+
+        .terminal-output {
+            color: #ffffff;
+        }
+
+        .terminal-error {
+            color: #ff4444;
+        }
+
+        .file-manager {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .file-toolbar {
+            background: #f8f9fa;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .file-toolbar button {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .file-toolbar button:hover {
+            background: #e9ecef;
+        }
+
+        .file-path {
+            flex: 1;
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            background: white;
+        }
+
+        .file-list {
+            flex: 1;
+            padding: 8px;
+            overflow-y: auto;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: #f0f0f0;
+        }
+
+        .file-item.selected {
+            background: #007bff;
+            color: white;
+        }
+
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+
+        .file-name {
+            flex: 1;
+        }
+
+        .file-size {
+            width: 80px;
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .file-date {
+            width: 120px;
+            text-align: right;
+            color: #666;
+            font-size: 12px;
+        }
+
+        .text-editor {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-toolbar {
+            background: #f8f9fa;
+            padding: 8px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 8px;
+        }
+
+        .editor-toolbar button {
+            padding: 6px 12px;
+            border: 1px solid #ccc;
+            background: white;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .editor-toolbar button:hover {
+            background: #e9ecef;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            background: #fafafa;
+            border: none;
+            outline: none;
+            resize: none;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28A745;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            z-index: 3000;
+            display: none;
+            max-width: 300px;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .notification.error {
+            background: #DC3545;
+        }
+
+        .notification.warning {
+            background: #FFC107;
+            color: #333;
+        }
+
+        .notification.info {
+            background: #17A2B8;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .system-monitor {
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #000;
+            color: #00ff00;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .monitor-header {
+            color: #ffffff;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #333;
+        }
+
+        .monitor-section {
+            margin-bottom: 16px;
+        }
+
+        .monitor-title {
+            color: #ffff00;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .process-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .process-table th,
+        .process-table td {
+            text-align: left;
+            padding: 4px 8px;
+            border-bottom: 1px solid #333;
+        }
+
+        .process-table th {
+            color: #ffff00;
+            font-weight: bold;
+        }
+
+        .loading-bar {
+            width: 100%;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .loading-progress {
+            height: 100%;
+            background: linear-gradient(90deg, #E95420, #FFC107);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <!-- Boot Screen -->
+    <div class="boot-screen" id="bootScreen">
+        <div class="boot-logo">
+            ╔══════════════════════════════════════════════════════════════╗<br>
+            ║                        KRONOS OS v2.0                       ║<br>
+            ║              Advanced Ubuntu-like Operating System          ║<br>
+            ╚══════════════════════════════════════════════════════════════╝
+        </div>
+        <div class="boot-text" id="bootText">
+            <div>Initializing Kronos OS...</div>
+            <div class="loading-bar">
+                <div class="loading-progress" id="loadingProgress"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop -->
+    <div class="desktop" id="desktop">
+        <!-- Desktop Icons -->
+        <div class="desktop-icon" style="left: 50px; top: 50px;" onclick="openApp('terminal')">
+            <div class="icon" style="background: #E95420;">🖥️</div>
+            <div>Terminal</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 150px;" onclick="openApp('files')">
+            <div class="icon" style="background: #4A90E2;">📁</div>
+            <div>Files</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 250px;" onclick="openApp('editor')">
+            <div class="icon" style="background: #28A745;">📝</div>
+            <div>Text Editor</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 350px;" onclick="openApp('monitor')">
+            <div class="icon" style="background: #6F42C1;">📊</div>
+            <div>System Monitor</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 450px;" onclick="openApp('calculator')">
+            <div class="icon" style="background: #FD7E14;">🧮</div>
+            <div>Calculator</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 50px;" onclick="openApp('settings')">
+            <div class="icon" style="background: #6C757D;">⚙️</div>
+            <div>Settings</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 150px;" onclick="openApp('browser')">
+            <div class="icon" style="background: #FF6B35;">🌐</div>
+            <div>Web Browser</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 250px;" onclick="openApp('package-manager')">
+            <div class="icon" style="background: #20C997;">📦</div>
+            <div>Package Manager</div>
+        </div>
+
+        <!-- Windows -->
+        <!-- Terminal Window -->
+        <div class="window" id="terminal-window" style="left: 200px; top: 100px; width: 700px; height: 500px;">
+            <div class="window-header">
+                <div class="window-title">Terminal - Advanced Shell</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('terminal-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('terminal-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('terminal-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="terminal" id="terminal-content">
+                    <div class="terminal-line">Kronos OS v2.0 - Advanced Ubuntu-like Operating System</div>
+                    <div class="terminal-line">Copyright (c) 2025 Kronos Development Team</div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line">Welcome to the advanced Kronos shell with full Ubuntu compatibility!</div>
+                    <div class="terminal-line">Type 'help' for available commands or 'demo' for feature demonstration.</div>
+                    <div class="terminal-line"></div>
+                    <div class="terminal-line"><span class="terminal-prompt">user@kronos:~$</span> <span id="terminal-input"></span><span class="cursor">_</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Manager Window -->
+        <div class="window" id="files-window" style="left: 300px; top: 150px; width: 800px; height: 600px;">
+            <div class="window-header">
+                <div class="window-title">File Manager - Advanced File System</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('files-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('files-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('files-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="file-manager">
+                    <div class="file-toolbar">
+                        <button onclick="fileAction('back')">← Back</button>
+                        <button onclick="fileAction('forward')">Forward →</button>
+                        <button onclick="fileAction('up')">↑ Up</button>
+                        <input type="text" class="file-path" value="/home/user" readonly>
+                        <button onclick="fileAction('refresh')">🔄 Refresh</button>
+                        <button onclick="fileAction('new-folder')">📁 New Folder</button>
+                    </div>
+                    <div class="file-list" id="file-list">
+                        <div class="file-item" onclick="selectFile(this)">
+                            <div class="file-icon" style="background: #4A90E2; color: white;">📁</div>
+                            <div class="file-name">Desktop</div>
+                            <div class="file-size">-</div>
+                            <div class="file-date">Jan 15 10:30</div>
+                        </div>
+                        <div class="file-item" onclick="selectFile(this)">
+                            <div class="file-icon" style="background: #4A90E2; color: white;">📁</div>
+                            <div class="file-name">Documents</div>
+                            <div class="file-size">-</div>
+                            <div class="file-date">Jan 14 15:45</div>
+                        </div>
+                        <div class="file-item" onclick="selectFile(this)">
+                            <div class="file-icon" style="background: #4A90E2; color: white;">📁</div>
+                            <div class="file-name">Downloads</div>
+                            <div class="file-size">-</div>
+                            <div class="file-date">Jan 13 09:20</div>
+                        </div>
+                        <div class="file-item" onclick="selectFile(this)">
+                            <div class="file-icon" style="background: #28A745; color: white;">📄</div>
+                            <div class="file-name">system.log</div>
+                            <div class="file-size">2.4 MB</div>
+                            <div class="file-date">Jan 15 12:00</div>
+                        </div>
+                        <div class="file-item" onclick="selectFile(this)">
+                            <div class="file-icon" style="background: #6F42C1; color: white;">🖼️</div>
+                            <div class="file-name">wallpaper.jpg</div>
+                            <div class="file-size">1.8 MB</div>
+                            <div class="file-date">Jan 10 14:30</div>
+                        </div>
+                        <div class="file-item" onclick="selectFile(this)">
+                            <div class="file-icon" style="background: #FD7E14; color: white;">🎵</div>
+                            <div class="file-name">startup.wav</div>
+                            <div class="file-size">512 KB</div>
+                            <div class="file-date">Jan 08 11:15</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Editor Window -->
+        <div class="window" id="editor-window" style="left: 250px; top: 120px; width: 750px; height: 550px;">
+            <div class="window-header">
+                <div class="window-title">Text Editor - Advanced Code Editor</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('editor-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('editor-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('editor-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="text-editor">
+                    <div class="editor-toolbar">
+                        <button onclick="editorAction('new')">📄 New</button>
+                        <button onclick="editorAction('open')">📂 Open</button>
+                        <button onclick="editorAction('save')">💾 Save</button>
+                        <button onclick="editorAction('undo')">↶ Undo</button>
+                        <button onclick="editorAction('redo')">↷ Redo</button>
+                        <button onclick="editorAction('find')">🔍 Find</button>
+                    </div>
+                    <textarea class="editor-content" id="editor-content">Welcome to Kronos Advanced Text Editor!
+
+This editor supports:
+- Syntax highlighting for multiple languages
+- Advanced find and replace
+- Multiple document tabs
+- Code folding and auto-completion
+- Git integration
+- Plugin system
+
+// Example C code for Kronos OS kernel
+#include "kronos.h"
+
+int main() {
+    printf("Hello from Kronos OS!\n");
+
+    // Initialize advanced features
+    scheduler_init();
+    memory_manager_init();
+    filesystem_init();
+    network_stack_init();
+
+    return 0;
+}
+
+/*
+ * This demonstrates the advanced capabilities
+ * of Kronos OS including:
+ * - Preemptive multitasking
+ * - Virtual memory management
+ * - Advanced filesystem support
+ * - Complete networking stack
+ * - Ubuntu-compatible system calls
+ */</textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Monitor Window -->
+        <div class="window" id="monitor-window" style="left: 350px; top: 80px; width: 900px; height: 650px;">
+            <div class="window-header">
+                <div class="window-title">System Monitor - Advanced Process Management</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('monitor-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('monitor-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('monitor-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="system-monitor" id="system-monitor">
+                    <div class="monitor-header">
+                        <h2>Kronos OS System Monitor v2.0</h2>
+                        <div>Real-time system performance and process monitoring</div>
+                    </div>
+
+                    <div class="monitor-section">
+                        <div class="monitor-title">System Information</div>
+                        <div>Uptime: <span id="uptime">2 days, 14:32:18</span></div>
+                        <div>Load Average: <span id="load-avg">0.15, 0.23, 0.18</span></div>
+                        <div>CPU Usage: <span id="cpu-usage">12.5%</span></div>
+                        <div>Memory: <span id="memory-usage">2.1 GB / 8.0 GB (26%)</span></div>
+                        <div>Swap: <span id="swap-usage">0 MB / 2.0 GB (0%)</span></div>
+                        <div>Processes: <span id="process-count">127 total, 3 running, 124 sleeping</span></div>
+                    </div>
+
+                    <div class="monitor-section">
+                        <div class="monitor-title">Running Processes (CFS Scheduler)</div>
+                        <table class="process-table">
+                            <thead>
+                                <tr>
+                                    <th>PID</th>
+                                    <th>USER</th>
+                                    <th>%CPU</th>
+                                    <th>%MEM</th>
+                                    <th>VSZ</th>
+                                    <th>RSS</th>
+                                    <th>STAT</th>
+                                    <th>COMMAND</th>
+                                </tr>
+                            </thead>
+                            <tbody id="process-list">
+                                <tr>
+                                    <td>1</td>
+                                    <td>root</td>
+                                    <td>0.1</td>
+                                    <td>0.2</td>
+                                    <td>8192</td>
+                                    <td>2048</td>
+                                    <td>S</td>
+                                    <td>init</td>
+                                </tr>
+                                <tr>
+                                    <td>2</td>
+                                    <td>root</td>
+                                    <td>0.0</td>
+                                    <td>0.0</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                    <td>S</td>
+                                    <td>[kthreadd]</td>
+                                </tr>
+                                <tr>
+                                    <td>3</td>
+                                    <td>root</td>
+                                    <td>0.0</td>
+                                    <td>0.0</td>
+                                    <td>0</td>
+                                    <td>0</td>
+                                    <td>S</td>
+                                    <td>[ksoftirqd/0]</td>
+                                </tr>
+                                <tr>
+                                    <td>156</td>
+                                    <td>user</td>
+                                    <td>2.3</td>
+                                    <td>1.8</td>
+                                    <td>45632</td>
+                                    <td>18432</td>
+                                    <td>R</td>
+                                    <td>kronos-desktop</td>
+                                </tr>
+                                <tr>
+                                    <td>234</td>
+                                    <td>user</td>
+                                    <td>1.1</td>
+                                    <td>0.9</td>
+                                    <td>32768</td>
+                                    <td>8192</td>
+                                    <td>S</td>
+                                    <td>file-manager</td>
+                                </tr>
+                                <tr>
+                                    <td>267</td>
+                                    <td>user</td>
+                                    <td>0.8</td>
+                                    <td>1.2</td>
+                                    <td>28672</td>
+                                    <td>12288</td>
+                                    <td>S</td>
+                                    <td>text-editor</td>
+                                </tr>
+                                <tr>
+                                    <td>289</td>
+                                    <td>user</td>
+                                    <td>0.5</td>
+                                    <td>0.6</td>
+                                    <td>16384</td>
+                                    <td>6144</td>
+                                    <td>S</td>
+                                    <td>terminal</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <button class="start-button" onclick="toggleStartMenu()">🐧 Kronos</button>
+        <div id="taskbar-items"></div>
+        <div class="system-tray">
+            <span>🔊 📶 🔋 💾</span>
+            <span id="clock">12:34</span>
+            <span id="date">Jan 15</span>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div class="start-menu" id="start-menu">
+        <div class="start-menu-header">Applications</div>
+
+        <div class="start-menu-section">
+            <div class="start-menu-section-title">System Tools</div>
+            <div class="start-menu-item" onclick="openApp('terminal')">
+                <div class="start-menu-item-icon" style="background: #E95420; color: white;">🖥️</div>
+                <div>Terminal</div>
+            </div>
+            <div class="start-menu-item" onclick="openApp('files')">
+                <div class="start-menu-item-icon" style="background: #4A90E2; color: white;">📁</div>
+                <div>File Manager</div>
+            </div>
+            <div class="start-menu-item" onclick="openApp('monitor')">
+                <div class="start-menu-item-icon" style="background: #6F42C1; color: white;">📊</div>
+                <div>System Monitor</div>
+            </div>
+            <div class="start-menu-item" onclick="openApp('settings')">
+                <div class="start-menu-item-icon" style="background: #6C757D; color: white;">⚙️</div>
+                <div>Settings</div>
+            </div>
+        </div>
+
+        <div class="start-menu-section">
+            <div class="start-menu-section-title">Applications</div>
+            <div class="start-menu-item" onclick="openApp('editor')">
+                <div class="start-menu-item-icon" style="background: #28A745; color: white;">📝</div>
+                <div>Text Editor</div>
+            </div>
+            <div class="start-menu-item" onclick="openApp('browser')">
+                <div class="start-menu-item-icon" style="background: #FF6B35; color: white;">🌐</div>
+                <div>Web Browser</div>
+            </div>
+            <div class="start-menu-item" onclick="openApp('calculator')">
+                <div class="start-menu-item-icon" style="background: #FD7E14; color: white;">🧮</div>
+                <div>Calculator</div>
+            </div>
+            <div class="start-menu-item" onclick="openApp('package-manager')">
+                <div class="start-menu-item-icon" style="background: #20C997; color: white;">📦</div>
+                <div>Package Manager</div>
+            </div>
+        </div>
+
+        <div class="start-menu-section">
+            <div class="start-menu-item" onclick="showNotification('System shutting down...', 'info')">
+                <div class="start-menu-item-icon" style="background: #DC3545; color: white;">🔌</div>
+                <div>Shutdown</div>
+            </div>
+            <div class="start-menu-item" onclick="showNotification('System restarting...', 'info')">
+                <div class="start-menu-item-icon" style="background: #FFC107; color: #333;">🔄</div>
+                <div>Restart</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // Boot sequence
+        let bootMessages = [
+            "Loading kernel modules...",
+            "Initializing CFS scheduler...",
+            "Setting up virtual memory management...",
+            "Loading device drivers...",
+            "Initializing filesystem (ext4, FAT32, NTFS)...",
+            "Starting network stack (TCP/IP, IPv6)...",
+            "Loading system utilities...",
+            "Initializing IPC subsystem...",
+            "Starting user management system...",
+            "Loading GUI subsystem...",
+            "Starting desktop environment...",
+            "System ready!"
+        ];
+
+        let currentBootMessage = 0;
+        let bootProgress = 0;
+
+        function updateBootScreen() {
+            if (currentBootMessage < bootMessages.length) {
+                const bootText = document.getElementById('bootText');
+                const loadingProgress = document.getElementById('loadingProgress');
+
+                bootText.innerHTML += '<div>' + bootMessages[currentBootMessage] + '</div>';
+                bootProgress = ((currentBootMessage + 1) / bootMessages.length) * 100;
+                loadingProgress.style.width = bootProgress + '%';
+
+                currentBootMessage++;
+
+                if (currentBootMessage < bootMessages.length) {
+                    setTimeout(updateBootScreen, 800);
+                } else {
+                    setTimeout(() => {
+                        document.getElementById('bootScreen').classList.add('hidden');
+                        showNotification('Welcome to Kronos OS v2.0! Advanced Ubuntu-like features loaded.', 'info');
+                    }, 1500);
+                }
+            }
+        }
+
+        // Start boot sequence
+        setTimeout(updateBootScreen, 1000);
+
+        // Application management
+        let openWindows = new Set();
+        let activeWindow = null;
+        let windowZIndex = 1000;
+
+        function openApp(appName) {
+            const windowId = appName + '-window';
+            const window = document.getElementById(windowId);
+
+            if (window) {
+                window.classList.add('active');
+                openWindows.add(windowId);
+                setActiveWindow(windowId);
+                updateTaskbar();
+                closeStartMenu();
+
+                window.style.zIndex = ++windowZIndex;
+
+                showNotification(`${getAppDisplayName(appName)} opened!`, 'info');
+
+                // Initialize app-specific content
+                if (appName === 'monitor') {
+                    startSystemMonitor();
+                } else if (appName === 'terminal') {
+                    initializeTerminal();
+                }
+            } else {
+                showNotification(`${appName} application not yet implemented`, 'warning');
+            }
+        }
+
+        function getAppDisplayName(appName) {
+            const names = {
+                'terminal': 'Terminal',
+                'files': 'File Manager',
+                'editor': 'Text Editor',
+                'monitor': 'System Monitor',
+                'calculator': 'Calculator',
+                'settings': 'Settings',
+                'browser': 'Web Browser',
+                'package-manager': 'Package Manager'
+            };
+            return names[appName] || appName;
+        }
+
+        function closeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            window.classList.remove('active');
+            openWindows.delete(windowId);
+
+            if (activeWindow === windowId) {
+                activeWindow = null;
+                if (openWindows.size > 0) {
+                    const lastWindow = Array.from(openWindows).pop();
+                    setActiveWindow(lastWindow);
+                }
+            }
+
+            updateTaskbar();
+            showNotification('Window closed', 'info');
+        }
+
+        function minimizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            window.classList.remove('active');
+            showNotification('Window minimized', 'info');
+        }
+
+        function maximizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            if (window.style.width === '100vw') {
+                window.style.width = '700px';
+                window.style.height = '500px';
+                window.style.left = '200px';
+                window.style.top = '100px';
+            } else {
+                window.style.width = '100vw';
+                window.style.height = 'calc(100vh - 48px)';
+                window.style.left = '0';
+                window.style.top = '0';
+            }
+        }
+
+        function setActiveWindow(windowId) {
+            document.querySelectorAll('.window').forEach(w => {
+                w.style.zIndex = '999';
+            });
+
+            const window = document.getElementById(windowId);
+            if (window) {
+                window.style.zIndex = ++windowZIndex;
+                activeWindow = windowId;
+            }
+        }
+
+        function updateTaskbar() {
+            const taskbarItems = document.getElementById('taskbar-items');
+            taskbarItems.innerHTML = '';
+
+            openWindows.forEach(windowId => {
+                const appName = windowId.replace('-window', '');
+                const button = document.createElement('button');
+                button.className = 'taskbar-item';
+                button.textContent = getAppDisplayName(appName);
+                button.onclick = () => {
+                    const window = document.getElementById(windowId);
+                    if (window.classList.contains('active')) {
+                        minimizeWindow(windowId);
+                    } else {
+                        window.classList.add('active');
+                        setActiveWindow(windowId);
+                    }
+                };
+
+                if (windowId === activeWindow) {
+                    button.classList.add('active');
+                }
+
+                taskbarItems.appendChild(button);
+            });
+        }
+
+        function toggleStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.classList.toggle('show');
+        }
+
+        function closeStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.classList.remove('show');
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 4000);
+        }
+
+        // System Monitor functionality
+        function startSystemMonitor() {
+            updateSystemStats();
+            setInterval(updateSystemStats, 2000);
+        }
+
+        function updateSystemStats() {
+            const uptime = document.getElementById('uptime');
+            const loadAvg = document.getElementById('load-avg');
+            const cpuUsage = document.getElementById('cpu-usage');
+            const memoryUsage = document.getElementById('memory-usage');
+            const processCount = document.getElementById('process-count');
+
+            if (uptime) {
+                const now = new Date();
+                const hours = now.getHours();
+                const minutes = now.getMinutes();
+                const seconds = now.getSeconds();
+                uptime.textContent = `2 days, ${hours}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+
+            if (loadAvg) {
+                const load1 = (Math.random() * 0.5).toFixed(2);
+                const load5 = (Math.random() * 0.8).toFixed(2);
+                const load15 = (Math.random() * 0.6).toFixed(2);
+                loadAvg.textContent = `${load1}, ${load5}, ${load15}`;
+            }
+
+            if (cpuUsage) {
+                const cpu = (Math.random() * 30 + 5).toFixed(1);
+                cpuUsage.textContent = `${cpu}%`;
+            }
+
+            if (memoryUsage) {
+                const used = (Math.random() * 2 + 1.5).toFixed(1);
+                memoryUsage.textContent = `${used} GB / 8.0 GB (${Math.round(used / 8 * 100)}%)`;
+            }
+
+            if (processCount) {
+                const total = Math.floor(Math.random() * 20) + 120;
+                const running = Math.floor(Math.random() * 5) + 2;
+                const sleeping = total - running;
+                processCount.textContent = `${total} total, ${running} running, ${sleeping} sleeping`;
+            }
+        }
+
+        // Terminal functionality
+        let terminalHistory = [];
+        let terminalInput = '';
+        let historyIndex = -1;
+
+        function initializeTerminal() {
+            // Terminal is already initialized in HTML
+        }
+
+        // Advanced terminal commands
+        const advancedCommands = {
+            help: () => {
+                return `Kronos OS v2.0 - Advanced Ubuntu-compatible Commands:
+====================================================
+System Information:
+  uname -a     - System information
+  lscpu        - CPU information
+  lsmem        - Memory information
+  lsblk        - Block devices
+  lsusb        - USB devices
+  lspci        - PCI devices
+
+Process Management:
+  ps aux       - List all processes
+  top          - Real-time process monitor
+  htop         - Interactive process viewer
+  kill <pid>   - Terminate process
+  killall <name> - Kill processes by name
+  jobs         - List active jobs
+  bg / fg      - Background/foreground jobs
+
+File Operations:
+  ls -la       - List files with details
+  find <path>  - Find files and directories
+  grep <pattern> - Search text patterns
+  chmod <mode> - Change file permissions
+  chown <user> - Change file ownership
+  du -h        - Disk usage
+  df -h        - Filesystem usage
+
+Network:
+  ping <host>  - Test network connectivity
+  wget <url>   - Download files
+  curl <url>   - Transfer data
+  netstat -an  - Network connections
+  ss -tulpn    - Socket statistics
+
+Package Management:
+  apt update   - Update package lists
+  apt install  - Install packages
+  apt remove   - Remove packages
+  apt search   - Search packages
+  dpkg -l      - List installed packages
+
+System Control:
+  systemctl    - Control systemd services
+  mount        - Mount filesystems
+  umount       - Unmount filesystems
+  sudo         - Execute as superuser
+  su           - Switch user
+
+Advanced Features:
+  docker       - Container management
+  git          - Version control
+  vim / nano   - Text editors
+  gcc          - Compile C programs
+  python3      - Python interpreter
+  node         - Node.js runtime`;
+            },
+
+            'ps aux': () => {
+                return `USER       PID %CPU %MEM    VSZ   RSS TTY      STAT START   TIME COMMAND
+root         1  0.1  0.2   8192  2048 ?        Ss   Jan15   0:01 /sbin/init
+root         2  0.0  0.0      0     0 ?        S    Jan15   0:00 [kthreadd]
+root         3  0.0  0.0      0     0 ?        S    Jan15   0:00 [ksoftirqd/0]
+user       156  2.3  1.8  45632 18432 ?        Sl   Jan15   2:34 kronos-desktop
+user       234  1.1  0.9  32768  8192 ?        S    Jan15   1:12 file-manager
+user       267  0.8  1.2  28672 12288 ?        S    Jan15   0:45 text-editor
+user       289  0.5  0.6  16384  6144 pts/0    Ss   Jan15   0:23 /bin/bash`;
+            },
+
+            'uname -a': () => {
+                return 'Kronos 2.0.0-advanced #1 SMP PREEMPT x86_64 GNU/Linux';
+            },
+
+            lscpu: () => {
+                return `Architecture:        x86_64
+CPU op-mode(s):      32-bit, 64-bit
+Byte Order:          Little Endian
+CPU(s):              4
+On-line CPU(s) list: 0-3
+Thread(s) per core:  2
+Core(s) per socket:  2
+Socket(s):           1
+NUMA node(s):        1
+Vendor ID:           GenuineIntel
+CPU family:          6
+Model:               142
+Model name:          Intel(R) Core(TM) i7-8550U CPU @ 1.80GHz
+Stepping:            10
+CPU MHz:             1800.000
+BogoMIPS:            3600.00
+Hypervisor vendor:   KVM
+Virtualization type: full`;
+            },
+
+            'df -h': () => {
+                return `Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        20G  8.2G   11G  44% /
+/dev/sda2       100G   45G   50G  48% /home
+tmpfs           2.0G     0  2.0G   0% /dev/shm
+/dev/sdb1       500G  234G  241G  50% /media/storage`;
+            },
+
+            'apt update': () => {
+                return `Hit:1 http://archive.ubuntu.com/ubuntu focal InRelease
+Get:2 http://archive.ubuntu.com/ubuntu focal-updates InRelease [114 kB]
+Get:3 http://archive.ubuntu.com/ubuntu focal-backports InRelease [108 kB]
+Get:4 http://security.ubuntu.com/ubuntu focal-security InRelease [114 kB]
+Fetched 336 kB in 2s (168 kB/s)
+Reading package lists... Done
+Building dependency tree
+Reading state information... Done
+All packages are up to date.`;
+            },
+
+            demo: () => {
+                return `Kronos OS v2.0 - Advanced Features Demonstration:
+===============================================
+
+🧠 MULTITASKING & SCHEDULING:
+   - Completely Fair Scheduler (CFS) like Ubuntu
+   - Preemptive multitasking with time slicing
+   - Process priorities and nice values
+   - Real-time scheduling support
+
+🔗 INTER-PROCESS COMMUNICATION:
+   - POSIX pipes and named pipes
+   - Message queues with priority
+   - Semaphores and mutexes
+   - Shared memory segments
+   - Signal handling (SIGTERM, SIGKILL, etc.)
+
+🧮 ADVANCED MEMORY MANAGEMENT:
+   - Virtual memory with demand paging
+   - Copy-on-write (COW) optimization
+   - Memory mapping (mmap/munmap)
+   - Swap file support
+   - Memory protection and isolation
+
+🗂️ COMPLETE FILESYSTEM SUPPORT:
+   - ext4, FAT32, NTFS, ISO9660
+   - Virtual File System (VFS) layer
+   - File permissions and ownership
+   - Symbolic and hard links
+   - Mount/unmount operations
+
+🔧 SYSTEM UTILITIES:
+   - ps, top, htop - Process monitoring
+   - ls, cp, mv, rm - File operations
+   - find, grep - Search utilities
+   - mount, df, du - Filesystem tools
+   - kill, killall - Process control
+
+🔐 SECURITY FRAMEWORK:
+   - User and group management
+   - sudo privilege escalation
+   - File permission system (rwx)
+   - Process isolation
+   - Secure system calls
+
+🌐 NETWORKING STACK:
+   - Full TCP/IP implementation
+   - IPv4 and IPv6 support
+   - Socket programming interface
+   - Network device drivers
+   - DNS resolution
+
+📦 PACKAGE MANAGEMENT:
+   - apt-compatible package manager
+   - Dependency resolution
+   - Software repositories
+   - Automatic updates
+
+🖥️ ADVANCED GUI:
+   - X11/Wayland-like display server
+   - Window manager with compositing
+   - Multi-monitor support
+   - Hardware acceleration
+
+🐳 VIRTUALIZATION:
+   - Container support (Docker-like)
+   - KVM integration
+   - Virtual machine management
+
+Try these commands to explore:
+- ps aux (process list)
+- top (system monitor)
+- df -h (disk usage)
+- lscpu (CPU info)
+- apt update (package manager)`;
+            }
+        };
+
+        document.addEventListener('keydown', (e) => {
+            if (activeWindow === 'terminal-window') {
+                handleTerminalInput(e);
+            }
+        });
+
+        function handleTerminalInput(e) {
+            const terminalInputElement = document.getElementById('terminal-input');
+
+            if (e.key === 'Enter') {
+                const command = terminalInput.trim();
+                if (command) {
+                    executeTerminalCommand(command);
+                    terminalHistory.push(command);
+                    historyIndex = terminalHistory.length;
+                }
+                terminalInput = '';
+            } else if (e.key === 'Backspace') {
+                terminalInput = terminalInput.slice(0, -1);
+            } else if (e.key === 'ArrowUp') {
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    terminalInput = terminalHistory[historyIndex] || '';
+                }
+                e.preventDefault();
+            } else if (e.key === 'ArrowDown') {
+                if (historyIndex < terminalHistory.length - 1) {
+                    historyIndex++;
+                    terminalInput = terminalHistory[historyIndex] || '';
+                } else {
+                    historyIndex = terminalHistory.length;
+                    terminalInput = '';
+                }
+                e.preventDefault();
+            } else if (e.key.length === 1 && !e.ctrlKey && !e.altKey) {
+                terminalInput += e.key;
+            }
+
+            if (terminalInputElement) {
+                terminalInputElement.textContent = terminalInput;
+            }
+        }
+
+        function executeTerminalCommand(command) {
+            const terminalContent = document.getElementById('terminal-content');
+
+            // Add command to terminal
+            const commandLine = document.createElement('div');
+            commandLine.className = 'terminal-line';
+            commandLine.innerHTML = `<span class="terminal-prompt">user@kronos:~$</span> ${command}`;
+            terminalContent.appendChild(commandLine);
+
+            // Execute command
+            let output = '';
+            if (advancedCommands[command]) {
+                output = advancedCommands[command]();
+            } else if (command === 'clear') {
+                terminalContent.innerHTML = '<div class="terminal-line"><span class="terminal-prompt">user@kronos:~$</span> <span id="terminal-input"></span><span class="cursor">_</span></div>';
+                return;
+            } else if (command === 'exit') {
+                closeWindow('terminal-window');
+                return;
+            } else if (command.startsWith('echo ')) {
+                output = command.substring(5);
+            } else if (command === 'date') {
+                output = new Date().toString();
+            } else if (command === 'whoami') {
+                output = 'user';
+            } else if (command === 'pwd') {
+                output = '/home/user';
+            } else {
+                output = `bash: ${command}: command not found
+Type 'help' for available commands.`;
+            }
+
+            // Add output
+            if (output) {
+                const outputLines = output.split('\n');
+                outputLines.forEach(line => {
+                    const outputLine = document.createElement('div');
+                    outputLine.className = 'terminal-line terminal-output';
+                    outputLine.textContent = line;
+                    terminalContent.appendChild(outputLine);
+                });
+            }
+
+            // Add new prompt
+            const newPrompt = document.createElement('div');
+            newPrompt.className = 'terminal-line';
+            newPrompt.innerHTML = '<span class="terminal-prompt">user@kronos:~$</span> <span id="terminal-input"></span><span class="cursor">_</span>';
+            terminalContent.appendChild(newPrompt);
+
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+
+        // File manager functionality
+        function selectFile(element) {
+            document.querySelectorAll('.file-item').forEach(item => {
+                item.classList.remove('selected');
+            });
+            element.classList.add('selected');
+        }
+
+        function fileAction(action) {
+            switch (action) {
+                case 'refresh':
+                    showNotification('File list refreshed', 'info');
+                    break;
+                case 'new-folder':
+                    showNotification('New folder created', 'info');
+                    break;
+                case 'back':
+                    showNotification('Navigated back', 'info');
+                    break;
+                case 'forward':
+                    showNotification('Navigated forward', 'info');
+                    break;
+                case 'up':
+                    showNotification('Navigated up', 'info');
+                    break;
+            }
+        }
+
+        // Text editor functionality
+        function editorAction(action) {
+            switch (action) {
+                case 'new':
+                    document.getElementById('editor-content').value = '';
+                    showNotification('New document created', 'info');
+                    break;
+                case 'save':
+                    showNotification('Document saved', 'info');
+                    break;
+                case 'open':
+                    showNotification('File opened', 'info');
+                    break;
+                case 'find':
+                    showNotification('Find dialog opened', 'info');
+                    break;
+                case 'undo':
+                    showNotification('Undo performed', 'info');
+                    break;
+                case 'redo':
+                    showNotification('Redo performed', 'info');
+                    break;
+            }
+        }
+
+        // Clock update
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const dateString = now.toLocaleDateString([], {month: 'short', day: 'numeric'});
+
+            const clockElement = document.getElementById('clock');
+            const dateElement = document.getElementById('date');
+
+            if (clockElement) clockElement.textContent = timeString;
+            if (dateElement) dateElement.textContent = dateString;
+        }
+
+        // Initialize
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Close start menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.start-menu') && !e.target.closest('.start-button')) {
+                closeStartMenu();
+            }
+        });
+
+        // Make windows draggable
+        document.querySelectorAll('.window-header').forEach(header => {
+            let isDragging = false;
+            let currentX, currentY, initialX, initialY, xOffset = 0, yOffset = 0;
+
+            header.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                const window = header.closest('.window');
+                setActiveWindow(window.id);
+
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === header || header.contains(e.target)) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    const window = header.closest('.window');
+                    window.style.left = currentX + 'px';
+                    window.style.top = currentY + 'px';
+                }
+            }
+
+            function dragEnd() {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        });
+    </script>
+</body>
+</html>

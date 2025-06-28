@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS Terminal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: #001100;
+            padding: 10px;
+            text-align: center;
+            border-bottom: 2px solid #00ff00;
+        }
+        
+        .terminal {
+            flex: 1;
+            background: #000;
+            padding: 20px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .line {
+            margin: 2px 0;
+            white-space: pre-wrap;
+        }
+        
+        .prompt {
+            color: #00ff00;
+            font-weight: bold;
+        }
+        
+        .output {
+            color: #ffffff;
+            margin-left: 0;
+        }
+        
+        .error {
+            color: #ff4444;
+        }
+        
+        .success {
+            color: #44ff44;
+        }
+        
+        .info {
+            color: #4444ff;
+        }
+        
+        .input-line {
+            display: flex;
+            align-items: center;
+        }
+        
+        .input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            outline: none;
+            flex: 1;
+            margin-left: 5px;
+        }
+        
+        .boot-text {
+            color: #ffff00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>KRONOS OS v1.0 - 64-bit Operating System Terminal</h2>
+        </div>
+        
+        <div class="terminal" id="terminal">
+            <div class="line boot-text">Kronos OS v1.0 - 64-bit Operating System</div>
+            <div class="line boot-text">========================================</div>
+            <div class="line"></div>
+            <div class="line boot-text">Initializing kernel subsystems...</div>
+            <div class="line boot-text">Setting up GDT... OK</div>
+            <div class="line boot-text">Setting up IDT... OK</div>
+            <div class="line boot-text">Installing IRQ handlers... OK</div>
+            <div class="line boot-text">Initializing memory management... OK</div>
+            <div class="line boot-text">Initializing keyboard driver... OK</div>
+            <div class="line boot-text">Initializing shell... OK</div>
+            <div class="line"></div>
+            <div class="line success">Kernel initialization complete!</div>
+            <div class="line success">Type 'help' for available commands.</div>
+            <div class="line"></div>
+            <div class="line success">Welcome to Kronos Shell (ksh)</div>
+            <div class="line"></div>
+            
+            <div class="input-line">
+                <span class="prompt">kronos$</span>
+                <input type="text" class="input" id="commandInput" autofocus>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const commandInput = document.getElementById('commandInput');
+        
+        let uptime = 0;
+        let memoryUsed = 1024;
+        let memoryTotal = 8192;
+        
+        // Start uptime counter
+        setInterval(() => uptime++, 1000);
+        
+        // Command implementations
+        const commands = {
+            help() {
+                return [
+                    "Kronos OS v1.0 - Available Commands:",
+                    "====================================",
+                    "  help          - Show this help message",
+                    "  clear         - Clear the screen", 
+                    "  meminfo       - Show memory information",
+                    "  uptime        - Show system uptime",
+                    "  echo [text]   - Echo text to console",
+                    "  about         - About Kronos OS",
+                    "  demo          - Show demo information",
+                    "  reboot        - Reboot the system",
+                    "  halt          - Halt the system",
+                    "",
+                    "Type any command above to try it!"
+                ];
+            },
+            
+            clear() {
+                // Clear terminal except header
+                const lines = terminal.querySelectorAll('.line, .input-line');
+                lines.forEach(line => {
+                    if (!line.querySelector('.input')) {
+                        line.remove();
+                    }
+                });
+                return [];
+            },
+            
+            meminfo() {
+                const used = memoryUsed;
+                const total = memoryTotal;
+                const free = total - used;
+                const usage = Math.round((used / total) * 100);
+                
+                return [
+                    "Memory Information:",
+                    "==================",
+                    `Total:  ${total} KB`,
+                    `Used:   ${used} KB`, 
+                    `Free:   ${free} KB`,
+                    `Usage:  ${usage}%`
+                ];
+            },
+            
+            uptime() {
+                return [`System uptime: ${uptime} seconds`];
+            },
+            
+            echo(args) {
+                return [args || ""];
+            },
+            
+            about() {
+                return [
+                    "Kronos OS v1.0 - 64-bit Operating System",
+                    "==========================================",
+                    "",
+                    "Features:",
+                    "- 64-bit x86_64 architecture",
+                    "- GRUB2 multiboot2 bootloader", 
+                    "- Global Descriptor Table (GDT)",
+                    "- Interrupt Descriptor Table (IDT)",
+                    "- Physical memory management",
+                    "- VGA text mode driver",
+                    "- PS/2 keyboard driver",
+                    "- Interactive CLI shell",
+                    "",
+                    "Author: Sandip Hembram",
+                    "Date: 2025-06-28"
+                ];
+            },
+            
+            demo() {
+                return [
+                    "Kronos OS Demo Information:",
+                    "=========================",
+                    "",
+                    "This is an interactive demonstration of Kronos OS.",
+                    "The actual OS is built in C and x86_64 Assembly.",
+                    "",
+                    "Real Kronos OS features:",
+                    "- Boots from GRUB2 bootloader",
+                    "- Runs in 64-bit long mode", 
+                    "- Hardware interrupt handling",
+                    "- Physical memory allocation",
+                    "- Device drivers for VGA and keyboard",
+                    "- Complete build system with Makefile",
+                    "",
+                    "Source code structure:",
+                    "- src/boot/     - Boot code and multiboot header",
+                    "- src/kernel/   - Core kernel (GDT, IDT, main)",
+                    "- src/drivers/  - VGA and keyboard drivers", 
+                    "- src/mm/       - Memory management",
+                    "- src/shell/    - Command shell",
+                    "- src/include/  - Header files"
+                ];
+            },
+            
+            reboot() {
+                addOutput(["Rebooting system..."], "info");
+                setTimeout(() => location.reload(), 1500);
+                return [];
+            },
+            
+            halt() {
+                addOutput(["System halted. You can safely close this window."], "success");
+                commandInput.disabled = true;
+                return [];
+            }
+        };
+        
+        function addOutput(lines, className = "output") {
+            const inputLine = terminal.querySelector('.input-line');
+            
+            lines.forEach(line => {
+                const div = document.createElement('div');
+                div.className = `line ${className}`;
+                div.textContent = line;
+                terminal.insertBefore(div, inputLine);
+            });
+            
+            terminal.scrollTop = terminal.scrollHeight;
+        }
+        
+        function executeCommand(input) {
+            const parts = input.trim().split(' ');
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1).join(' ');
+            
+            // Add command to terminal
+            addOutput([`kronos$ ${input}`], "prompt");
+            
+            if (cmd === '') {
+                return;
+            }
+            
+            if (commands[cmd]) {
+                const result = commands[cmd](args);
+                if (result && result.length > 0) {
+                    addOutput(result, "output");
+                }
+            } else {
+                addOutput([
+                    `ksh: command not found: ${cmd}`,
+                    "Type 'help' for available commands."
+                ], "error");
+            }
+            
+            // Simulate memory usage
+            memoryUsed += Math.floor(Math.random() * 10);
+            if (memoryUsed > memoryTotal * 0.9) {
+                memoryUsed = 1024;
+            }
+        }
+        
+        commandInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                const command = this.value;
+                executeCommand(command);
+                this.value = '';
+            }
+        });
+        
+        // Keep input focused
+        commandInput.addEventListener('blur', function() {
+            setTimeout(() => this.focus(), 10);
+        });
+        
+        // Initial focus
+        commandInput.focus();
+    </script>
+</body>
+</html>

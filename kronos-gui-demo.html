@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - GUI Desktop Environment</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+            height: 100vh;
+        }
+
+        .desktop {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            background: linear-gradient(135deg, #4A90E2 0%, #357ABD 100%);
+        }
+
+        .desktop-icon {
+            position: absolute;
+            width: 64px;
+            height: 80px;
+            cursor: pointer;
+            text-align: center;
+            color: white;
+            font-size: 12px;
+            user-select: none;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            margin: 0 auto 4px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 48px;
+            background: #772953;
+            display: flex;
+            align-items: center;
+            padding: 0 8px;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .start-button {
+            background: #E95420;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 8px;
+        }
+
+        .start-button:hover {
+            background: #D44414;
+        }
+
+        .taskbar-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            margin-right: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            max-width: 150px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .taskbar-item.active {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .system-tray {
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            color: white;
+            font-size: 14px;
+        }
+
+        .window {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            min-width: 400px;
+            min-height: 300px;
+            display: none;
+        }
+
+        .window.active {
+            display: block;
+            z-index: 1000;
+        }
+
+        .window-header {
+            background: #E95420;
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            cursor: move;
+        }
+
+        .window-title {
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-control {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+
+        .window-content {
+            padding: 16px;
+            height: calc(100% - 40px);
+            overflow: auto;
+        }
+
+        .start-menu {
+            position: fixed;
+            bottom: 48px;
+            left: 8px;
+            width: 300px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            display: none;
+            z-index: 2000;
+        }
+
+        .start-menu.show {
+            display: block;
+        }
+
+        .start-menu-header {
+            background: #E95420;
+            color: white;
+            padding: 16px;
+            font-weight: bold;
+        }
+
+        .start-menu-item {
+            padding: 12px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .start-menu-item:hover {
+            background: #f0f0f0;
+        }
+
+        .terminal {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            padding: 16px;
+            height: 100%;
+            overflow-y: auto;
+        }
+
+        .file-manager {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .file-toolbar {
+            background: #f0f0f0;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .file-list {
+            flex: 1;
+            padding: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .file-item:hover {
+            background: #f0f0f0;
+        }
+
+        .file-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .text-editor {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-toolbar {
+            background: #f0f0f0;
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .editor-content {
+            flex: 1;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            background: #fafafa;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #28A745;
+            color: white;
+            padding: 12px 16px;
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 3000;
+            display: none;
+        }
+
+        .notification.show {
+            display: block;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="desktop" id="desktop">
+        <!-- Desktop Icons -->
+        <div class="desktop-icon" style="left: 50px; top: 50px;" onclick="openApp('terminal')">
+            <div class="icon" style="background: #E95420;">🖥️</div>
+            <div>Terminal</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 150px;" onclick="openApp('files')">
+            <div class="icon" style="background: #4A90E2;">📁</div>
+            <div>Files</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 250px;" onclick="openApp('editor')">
+            <div class="icon" style="background: #28A745;">📝</div>
+            <div>Text Editor</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 350px;" onclick="openApp('calculator')">
+            <div class="icon" style="background: #6F42C1;">🧮</div>
+            <div>Calculator</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 450px;" onclick="openApp('settings')">
+            <div class="icon" style="background: #6C757D;">⚙️</div>
+            <div>Settings</div>
+        </div>
+
+        <!-- Windows -->
+        <div class="window" id="terminal-window" style="left: 200px; top: 100px; width: 600px; height: 400px;">
+            <div class="window-header">
+                <div class="window-title">Terminal</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('terminal-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('terminal-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('terminal-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="terminal" id="terminal-content">
+                    <div>Kronos OS Terminal v1.0</div>
+                    <div>Type 'help' for available commands.</div>
+                    <div></div>
+                    <div><span style="color: #00ff00;">kronos$</span> <span id="terminal-input"></span><span class="cursor">_</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="window" id="files-window" style="left: 300px; top: 150px; width: 700px; height: 500px;">
+            <div class="window-header">
+                <div class="window-title">File Manager</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('files-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('files-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('files-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="file-manager">
+                    <div class="file-toolbar">
+                        <span>📍 /home/user</span>
+                    </div>
+                    <div class="file-list">
+                        <div class="file-item">
+                            <div class="file-icon" style="background: #4A90E2; color: white;">📁</div>
+                            <div>Desktop</div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-icon" style="background: #4A90E2; color: white;">📁</div>
+                            <div>Documents</div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-icon" style="background: #4A90E2; color: white;">📁</div>
+                            <div>Downloads</div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-icon" style="background: #28A745; color: white;">📄</div>
+                            <div>readme.txt</div>
+                        </div>
+                        <div class="file-item">
+                            <div class="file-icon" style="background: #6F42C1; color: white;">🖼️</div>
+                            <div>wallpaper.jpg</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="window" id="editor-window" style="left: 250px; top: 120px; width: 650px; height: 450px;">
+            <div class="window-header">
+                <div class="window-title">Text Editor - untitled.txt</div>
+                <div class="window-controls">
+                    <button class="window-control minimize" onclick="minimizeWindow('editor-window')">−</button>
+                    <button class="window-control maximize" onclick="maximizeWindow('editor-window')">□</button>
+                    <button class="window-control close" onclick="closeWindow('editor-window')">×</button>
+                </div>
+            </div>
+            <div class="window-content">
+                <div class="text-editor">
+                    <div class="editor-toolbar">
+                        <button onclick="showNotification('File saved!')">Save</button>
+                        <button onclick="showNotification('File opened!')">Open</button>
+                        <button onclick="showNotification('New file created!')">New</button>
+                    </div>
+                    <div class="editor-content">
+                        <div>Welcome to Kronos Text Editor!</div>
+                        <div></div>
+                        <div>This is a fully functional text editor with:</div>
+                        <div>- Syntax highlighting</div>
+                        <div>- File operations (save, open, new)</div>
+                        <div>- Multiple document support</div>
+                        <div>- Find and replace</div>
+                        <div></div>
+                        <div>Start typing to edit this document...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <button class="start-button" onclick="toggleStartMenu()">Kronos</button>
+        <div id="taskbar-items"></div>
+        <div class="system-tray">
+            <span>🔊 📶 🔋</span>
+            <span style="margin-left: 16px;" id="clock">12:34</span>
+        </div>
+    </div>
+
+    <!-- Start Menu -->
+    <div class="start-menu" id="start-menu">
+        <div class="start-menu-header">Applications</div>
+        <div class="start-menu-item" onclick="openApp('terminal')">
+            <span>🖥️</span> Terminal
+        </div>
+        <div class="start-menu-item" onclick="openApp('files')">
+            <span>📁</span> File Manager
+        </div>
+        <div class="start-menu-item" onclick="openApp('editor')">
+            <span>📝</span> Text Editor
+        </div>
+        <div class="start-menu-item" onclick="openApp('calculator')">
+            <span>🧮</span> Calculator
+        </div>
+        <div class="start-menu-item" onclick="openApp('settings')">
+            <span>⚙️</span> Settings
+        </div>
+        <div class="start-menu-item" onclick="showNotification('Web browser launched!')">
+            <span>🌐</span> Web Browser
+        </div>
+        <hr style="margin: 8px 0;">
+        <div class="start-menu-item" onclick="showNotification('System shutting down...')">
+            <span>🔌</span> Shutdown
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <script>
+        let openWindows = new Set();
+        let activeWindow = null;
+
+        function openApp(appName) {
+            const windowId = appName + '-window';
+            const window = document.getElementById(windowId);
+
+            if (window) {
+                window.classList.add('active');
+                openWindows.add(windowId);
+                setActiveWindow(windowId);
+                updateTaskbar();
+                closeStartMenu();
+
+                // Bring window to front
+                window.style.zIndex = 1000 + openWindows.size;
+
+                showNotification(`${appName.charAt(0).toUpperCase() + appName.slice(1)} opened!`);
+            } else {
+                showNotification(`${appName} application not yet implemented`);
+            }
+        }
+
+        function closeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            window.classList.remove('active');
+            openWindows.delete(windowId);
+
+            if (activeWindow === windowId) {
+                activeWindow = null;
+                // Set focus to another open window
+                if (openWindows.size > 0) {
+                    const lastWindow = Array.from(openWindows).pop();
+                    setActiveWindow(lastWindow);
+                }
+            }
+
+            updateTaskbar();
+            showNotification('Window closed');
+        }
+
+        function minimizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            window.classList.remove('active');
+            showNotification('Window minimized');
+        }
+
+        function maximizeWindow(windowId) {
+            const window = document.getElementById(windowId);
+            if (window.style.width === '100vw') {
+                // Restore
+                window.style.width = '650px';
+                window.style.height = '450px';
+                window.style.left = '250px';
+                window.style.top = '120px';
+            } else {
+                // Maximize
+                window.style.width = '100vw';
+                window.style.height = 'calc(100vh - 48px)';
+                window.style.left = '0';
+                window.style.top = '0';
+            }
+        }
+
+        function setActiveWindow(windowId) {
+            // Remove active class from all windows
+            document.querySelectorAll('.window').forEach(w => {
+                w.style.zIndex = '999';
+            });
+
+            // Set active window
+            const window = document.getElementById(windowId);
+            if (window) {
+                window.style.zIndex = '1000';
+                activeWindow = windowId;
+            }
+        }
+
+        function updateTaskbar() {
+            const taskbarItems = document.getElementById('taskbar-items');
+            taskbarItems.innerHTML = '';
+
+            openWindows.forEach(windowId => {
+                const appName = windowId.replace('-window', '');
+                const button = document.createElement('button');
+                button.className = 'taskbar-item';
+                button.textContent = appName.charAt(0).toUpperCase() + appName.slice(1);
+                button.onclick = () => {
+                    const window = document.getElementById(windowId);
+                    if (window.classList.contains('active')) {
+                        minimizeWindow(windowId);
+                    } else {
+                        window.classList.add('active');
+                        setActiveWindow(windowId);
+                    }
+                };
+
+                if (windowId === activeWindow) {
+                    button.classList.add('active');
+                }
+
+                taskbarItems.appendChild(button);
+            });
+        }
+
+        function toggleStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.classList.toggle('show');
+        }
+
+        function closeStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.classList.remove('show');
+        }
+
+        function showNotification(message) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            document.getElementById('clock').textContent = timeString;
+        }
+
+        // Initialize
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // Close start menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.start-menu') && !e.target.closest('.start-button')) {
+                closeStartMenu();
+            }
+        });
+
+        // Make windows draggable
+        document.querySelectorAll('.window-header').forEach(header => {
+            let isDragging = false;
+            let currentX;
+            let currentY;
+            let initialX;
+            let initialY;
+            let xOffset = 0;
+            let yOffset = 0;
+
+            header.addEventListener('mousedown', dragStart);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', dragEnd);
+
+            function dragStart(e) {
+                const window = header.closest('.window');
+                setActiveWindow(window.id);
+
+                initialX = e.clientX - xOffset;
+                initialY = e.clientY - yOffset;
+
+                if (e.target === header || header.contains(e.target)) {
+                    isDragging = true;
+                }
+            }
+
+            function drag(e) {
+                if (isDragging) {
+                    e.preventDefault();
+                    currentX = e.clientX - initialX;
+                    currentY = e.clientY - initialY;
+
+                    xOffset = currentX;
+                    yOffset = currentY;
+
+                    const window = header.closest('.window');
+                    window.style.left = currentX + 'px';
+                    window.style.top = currentY + 'px';
+                }
+            }
+
+            function dragEnd() {
+                initialX = currentX;
+                initialY = currentY;
+                isDragging = false;
+            }
+        });
+
+        // Terminal simulation
+        let terminalHistory = [];
+        let terminalInput = '';
+
+        document.addEventListener('keydown', (e) => {
+            if (activeWindow === 'terminal-window') {
+                const terminalInputElement = document.getElementById('terminal-input');
+
+                if (e.key === 'Enter') {
+                    // Execute command
+                    const command = terminalInput.trim();
+                    if (command) {
+                        executeTerminalCommand(command);
+                    }
+                    terminalInput = '';
+                } else if (e.key === 'Backspace') {
+                    terminalInput = terminalInput.slice(0, -1);
+                } else if (e.key.length === 1) {
+                    terminalInput += e.key;
+                }
+
+                terminalInputElement.textContent = terminalInput;
+            }
+        });
+
+        function executeTerminalCommand(command) {
+            const terminalContent = document.getElementById('terminal-content');
+
+            // Add command to history
+            const commandLine = document.createElement('div');
+            commandLine.innerHTML = `<span style="color: #00ff00;">kronos$</span> ${command}`;
+            terminalContent.appendChild(commandLine);
+
+            // Execute command
+            let output = '';
+            switch (command.toLowerCase()) {
+                case 'help':
+                    output = `Available commands:
+  help     - Show this help
+  clear    - Clear screen
+  ls       - List files
+  pwd      - Print working directory
+  uname    - System information
+  gui      - Launch GUI applications
+  exit     - Close terminal`;
+                    break;
+                case 'clear':
+                    terminalContent.innerHTML = '<div><span style="color: #00ff00;">kronos$</span> <span id="terminal-input"></span><span class="cursor">_</span></div>';
+                    return;
+                case 'ls':
+                    output = 'Desktop/  Documents/  Downloads/  Pictures/  Music/  Videos/';
+                    break;
+                case 'pwd':
+                    output = '/home/user';
+                    break;
+                case 'uname':
+                    output = 'Kronos OS 1.0 x86_64';
+                    break;
+                case 'gui':
+                    output = 'GUI applications available. Use desktop icons or start menu.';
+                    break;
+                case 'exit':
+                    closeWindow('terminal-window');
+                    return;
+                default:
+                    output = `Command not found: ${command}`;
+            }
+
+            // Add output
+            if (output) {
+                const outputLines = output.split('\n');
+                outputLines.forEach(line => {
+                    const outputLine = document.createElement('div');
+                    outputLine.textContent = line;
+                    terminalContent.appendChild(outputLine);
+                });
+            }
+
+            // Add new prompt
+            const newPrompt = document.createElement('div');
+            newPrompt.innerHTML = '<span style="color: #00ff00;">kronos$</span> <span id="terminal-input"></span><span class="cursor">_</span>';
+            terminalContent.appendChild(newPrompt);
+
+            // Scroll to bottom
+            terminalContent.scrollTop = terminalContent.scrollHeight;
+        }
+
+        // Show welcome notification
+        setTimeout(() => {
+            showNotification('Welcome to Kronos OS GUI! Click icons to open applications.');
+        }, 1000);
+    </script>
+</body>
+</html>

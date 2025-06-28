@@ -1,0 +1,3456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Complete Working Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .desktop {
+            width: 100%;
+            height: 100vh;
+            position: relative;
+            background-size: cover;
+            background-position: center;
+        }
+
+        .desktop-icon {
+            position: absolute;
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            color: white;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+
+        .desktop-icon:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin: 0 auto 8px;
+            color: white;
+        }
+
+        .taskbar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            z-index: 10000;
+        }
+
+        .start-button {
+            background: #E95420;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        .start-button:hover {
+            background: #D44414;
+        }
+
+        .taskbar-items {
+            display: flex;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .taskbar-item {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .taskbar-item.active {
+            background: #E95420;
+        }
+
+        .clock {
+            color: white;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .window {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+            min-width: 400px;
+            min-height: 300px;
+            display: none;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+        }
+
+        .window.show {
+            display: block !important;
+        }
+
+        .window-header {
+            background: linear-gradient(to bottom, #E95420, #D44414);
+            color: white;
+            padding: 8px 12px;
+            display: flex;
+            align-items: center;
+            cursor: move;
+            user-select: none;
+        }
+
+        .window-title {
+            flex: 1;
+            font-weight: 600;
+        }
+
+        .window-controls {
+            display: flex;
+            gap: 4px;
+        }
+
+        .window-control {
+            width: 20px;
+            height: 20px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+
+        .window-content {
+            padding: 20px;
+            height: calc(100% - 40px);
+            overflow-y: auto;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #E95420;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 10001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .start-menu {
+            position: fixed;
+            bottom: 60px;
+            left: 15px;
+            width: 300px;
+            background: rgba(0, 0, 0, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 8px;
+            padding: 15px;
+            display: none;
+            z-index: 10000;
+        }
+
+        .start-menu.show {
+            display: block;
+        }
+
+        .start-menu-header {
+            color: white;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .start-menu-section {
+            margin-bottom: 15px;
+        }
+
+        .start-menu-section-title {
+            color: #ccc;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .start-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: white;
+            transition: background 0.2s ease;
+        }
+
+        .start-menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .start-menu-item-icon {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+
+        /* Settings System Styles */
+        .settings-category {
+            transition: all 0.2s ease;
+        }
+
+        .settings-category:hover {
+            background: rgba(233, 84, 32, 0.1) !important;
+            color: #E95420 !important;
+        }
+
+        .settings-category.active {
+            background: #E95420 !important;
+            color: white !important;
+        }
+
+        /* Custom range slider styles */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-track {
+            background: #ddd;
+            height: 6px;
+            border-radius: 3px;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            background: #E95420;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-moz-range-track {
+            background: #ddd;
+            height: 6px;
+            border-radius: 3px;
+            border: none;
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            background: #E95420;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+        }
+
+        /* Custom checkbox styles */
+        input[type="checkbox"] {
+            accent-color: #E95420;
+        }
+
+        /* Network status animation */
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.1); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .network-item {
+            transition: all 0.2s ease;
+        }
+
+        .network-item:hover {
+            background: #f8f9fa !important;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .network-item.connected {
+            background: #f8fff8 !important;
+        }
+
+        /* Borderless window styles for Arduino/Mini Computer */
+        .window.borderless {
+            border: none !important;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .window.borderless .window-header {
+            border-radius: 12px 12px 0 0;
+        }
+
+        .window.borderless .window-content {
+            border-radius: 0 0 12px 12px;
+        }
+
+        /* Terminal cursor animation */
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        .cursor {
+            animation: blink 1s infinite;
+        }
+
+        /* Real-time data styling */
+        #terminal-input {
+            background: transparent !important;
+            border: none !important;
+            color: #00ff41 !important;
+            font-family: 'Courier New', monospace !important;
+            outline: none !important;
+        }
+
+        #terminal-input::placeholder {
+            color: #666 !important;
+        }
+
+        /* Scrollbar styling for terminal */
+        #terminal-output::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #terminal-output::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        #terminal-output::-webkit-scrollbar-thumb {
+            background: #333;
+            border-radius: 4px;
+        }
+
+        #terminal-output::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Monitor progress bars */
+        .progress-bar {
+            transition: width 0.5s ease-in-out;
+        }
+
+        /* Educational styling */
+        .edu-highlight {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: bold;
+        }
+
+        /* Enhanced Taskbar Item States */
+        .taskbar-item {
+            transition: all 0.3s ease;
+            border-radius: 8px;
+            margin: 0 2px;
+            position: relative;
+        }
+
+        .taskbar-item.minimized {
+            opacity: 0.7 !important;
+            background: linear-gradient(135deg, #6c757d, #495057) !important;
+            border: 2px dashed #adb5bd !important;
+        }
+
+        .taskbar-item.minimized::after {
+            content: "📦";
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 12px;
+            background: #ffc107;
+            border-radius: 50%;
+            width: 16px;
+            height: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .taskbar-item.active {
+            opacity: 1 !important;
+            background: linear-gradient(135deg, #E95420, #D44414) !important;
+            border: 2px solid #E95420 !important;
+            box-shadow: 0 0 10px rgba(233, 84, 32, 0.5);
+        }
+
+        .taskbar-item.inactive {
+            opacity: 0.8 !important;
+            background: linear-gradient(135deg, #495057, #343a40) !important;
+            border: 1px solid #6c757d !important;
+        }
+
+        .taskbar-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+
+        /* Window minimize animation */
+        .window.minimizing {
+            animation: minimizeToTaskbar 0.3s ease-in-out;
+        }
+
+        .window.restoring {
+            animation: restoreFromTaskbar 0.3s ease-in-out;
+        }
+
+        @keyframes minimizeToTaskbar {
+            0% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(0.8) translateY(20px);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(0.1) translateY(400px);
+                opacity: 0;
+            }
+        }
+
+        @keyframes restoreFromTaskbar {
+            0% {
+                transform: scale(0.1) translateY(400px);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(0.8) translateY(20px);
+                opacity: 0.7;
+            }
+            100% {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+
+        /* Window state indicators */
+        .window.minimized {
+            display: none !important;
+        }
+
+        .window.show {
+            display: block !important;
+        }
+
+    </style>
+</head>
+<body>
+    <!-- Desktop -->
+    <div class="desktop" id="desktop">
+
+
+        <!-- Desktop Icons -->
+        <div class="desktop-icon" style="left: 50px; top: 50px;" onclick="openWindow('terminal')">
+            <div class="icon" style="background: #E95420;">🖥️</div>
+            <div>Terminal</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 150px;" onclick="openWindow('files')">
+            <div class="icon" style="background: #4A90E2;">📁</div>
+            <div>Files</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 250px;" onclick="openWindow('calculator')">
+            <div class="icon" style="background: #FD7E14;">🧮</div>
+            <div>Calculator</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 50px; top: 350px;" onclick="openWindow('games')">
+            <div class="icon" style="background: #795548;">🎮</div>
+            <div>Games</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 50px;" onclick="openWindow('settings')">
+            <div class="icon" style="background: #6C757D;">⚙️</div>
+            <div>Settings</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 150px;" onclick="openWindow('monitor')">
+            <div class="icon" style="background: #6F42C1;">📊</div>
+            <div>Monitor</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 250px;" onclick="openWindow('music')">
+            <div class="icon" style="background: #9C27B0;">🎵</div>
+            <div>Music</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 150px; top: 350px;" onclick="openWindow('video')">
+            <div class="icon" style="background: #F44336;">🎬</div>
+            <div>Video</div>
+        </div>
+
+        <div class="desktop-icon" style="left: 250px; top: 50px;" onclick="openWindow('appstore')">
+            <div class="icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">🏪</div>
+            <div>App Store</div>
+        </div>
+    </div>
+
+    <!-- Taskbar -->
+    <div class="taskbar">
+        <button class="start-button" onclick="toggleStartMenu()">Kronos</button>
+        <div class="taskbar-items" id="taskbar-items"></div>
+        <div class="clock" id="clock">12:00 PM</div>
+    </div>
+
+    <!-- Start Menu -->
+    <div class="start-menu" id="start-menu">
+        <div class="start-menu-header">Applications</div>
+        <div class="start-menu-section">
+            <div class="start-menu-section-title">System Tools</div>
+            <div class="start-menu-item" onclick="openWindow('terminal')">
+                <div class="start-menu-item-icon" style="background: #E95420;">🖥️</div>
+                <div>Terminal</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('files')">
+                <div class="start-menu-item-icon" style="background: #4A90E2;">📁</div>
+                <div>File Manager</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('monitor')">
+                <div class="start-menu-item-icon" style="background: #6F42C1;">📊</div>
+                <div>System Monitor</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('settings')">
+                <div class="start-menu-item-icon" style="background: #6C757D;">⚙️</div>
+                <div>Settings</div>
+            </div>
+        </div>
+        <div class="start-menu-section">
+            <div class="start-menu-section-title">Applications</div>
+            <div class="start-menu-item" onclick="openWindow('calculator')">
+                <div class="start-menu-item-icon" style="background: #FD7E14;">🧮</div>
+                <div>Calculator</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('games')">
+                <div class="start-menu-item-icon" style="background: #795548;">🎮</div>
+                <div>Games</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('music')">
+                <div class="start-menu-item-icon" style="background: #9C27B0;">🎵</div>
+                <div>Music Player</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('video')">
+                <div class="start-menu-item-icon" style="background: #F44336;">🎬</div>
+                <div>Video Player</div>
+            </div>
+            <div class="start-menu-item" onclick="openWindow('appstore')">
+                <div class="start-menu-item-icon" style="background: linear-gradient(135deg, #667eea, #764ba2);">🏪</div>
+                <div>App Store</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+
+    <!-- Windows -->
+    <!-- Enhanced Terminal Window - Borderless for Arduino/Mini Computer -->
+    <div class="window borderless" id="terminal-window" style="left: 50px; top: 50px; width: 900px; height: 650px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="window-header" style="background: linear-gradient(135deg, #2c3e50, #34495e); border: none;">
+            <div class="window-title" style="color: #ecf0f1; font-weight: bold;">🖥️ Kronos Terminal - Real-Time OS Monitor</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('terminal-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('terminal-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('terminal-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="background: #0c0c0c; color: #00ff41; font-family: 'Courier New', monospace; padding: 10px; border: none; overflow-y: auto;">
+            <div id="terminal-output" style="height: 520px; overflow-y: auto; padding: 5px;">
+                <div style="color: #00ff41; font-weight: bold;">╔══════════════════════════════════════════════════════════════════════════════╗</div>
+                <div style="color: #00ff41; font-weight: bold;">║                    KRONOS OS - REAL-TIME EDUCATIONAL SYSTEM                  ║</div>
+                <div style="color: #00ff41; font-weight: bold;">║                        Arduino & Mini Computer Ready                         ║</div>
+                <div style="color: #00ff41; font-weight: bold;">╚══════════════════════════════════════════════════════════════════════════════╝</div>
+                <div style="margin-top: 10px; color: #ffff00;">System Status: <span style="color: #00ff41;">ONLINE</span> | Uptime: <span id="uptime">00:00:00</span></div>
+                <div style="color: #ffff00;">Architecture: <span style="color: #00ff41;">x86_64</span> | Mode: <span style="color: #00ff41;">Real-Time</span></div>
+                <div style="color: #ffff00;">Memory: <span style="color: #00ff41;">16GB</span> | Available: <span id="available-memory" style="color: #00ff41;">12.4GB</span></div>
+                <div style="margin-top: 10px; color: #ff6b6b;">Real-Time OS Data Stream:</div>
+                <div id="realtime-data" style="margin-top: 5px; font-size: 12px; line-height: 1.2;"></div>
+                <div style="margin-top: 15px; color: #74c0fc;">Available Commands:</div>
+                <div style="color: #a8e6cf; font-size: 12px;">
+                    help, status, ps, top, mem, cpu, sensors, gpio, i2c, spi, uart, pwm, adc, temp, voltage
+                </div>
+                <div style="margin-top: 10px;"></div>
+            </div>
+            <div style="border-top: 1px solid #333; padding-top: 5px;">
+                <span style="color: #ffff00;">root@kronos-edu:~#</span>
+                <input type="text" id="terminal-input" style="background: transparent; border: none; color: #00ff41; font-family: 'Courier New', monospace; outline: none; width: 70%;" placeholder="Enter command..." onkeypress="handleTerminalInput(event)">
+                <span class="cursor" style="background: #00ff41; color: #0c0c0c; animation: blink 1s infinite;">█</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced File Manager Window -->
+    <div class="window borderless" id="files-window" style="left: 120px; top: 60px; width: 1100px; height: 750px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="window-header" style="background: linear-gradient(135deg, #4facfe, #00f2fe); border: none;">
+            <div class="window-title" style="color: #ffffff; font-weight: bold;">📁 Kronos File Manager - Advanced File Operations</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('files-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('files-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('files-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="background: #f8f9fa; padding: 0; border: none; overflow: hidden;">
+            <!-- Toolbar -->
+            <div style="background: #ffffff; padding: 12px; border-bottom: 1px solid #e0e0e0; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button id="back-btn" onclick="navigateBack()" style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        ← Back
+                    </button>
+                    <button id="forward-btn" onclick="navigateForward()" style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        Forward →
+                    </button>
+                    <button onclick="navigateUp()" style="background: #6c757d; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        ↑ Up
+                    </button>
+                    <button onclick="refreshFileManager()" style="background: #28a745; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        🔄 Refresh
+                    </button>
+                </div>
+
+                <div style="flex: 1; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: bold; color: #666;">Path:</span>
+                    <input type="text" id="address-bar" value="/home/user" style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 6px; font-family: monospace;" onkeypress="handleAddressBarEnter(event)">
+                    <button onclick="navigateToPath()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Go</button>
+                </div>
+
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <button onclick="createNewFolder()" style="background: #ffc107; color: #333; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        📁+ New Folder
+                    </button>
+                    <button onclick="createNewFile()" style="background: #17a2b8; color: white; border: none; padding: 8px 12px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 5px;">
+                        📄+ New File
+                    </button>
+                    <select id="view-mode" onchange="changeViewMode()" style="padding: 8px; border: 1px solid #ddd; border-radius: 6px;">
+                        <option value="grid">Grid View</option>
+                        <option value="list">List View</option>
+                        <option value="details">Details View</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Sidebar and Main Content -->
+            <div style="display: flex; height: calc(100% - 80px);">
+                <!-- Sidebar -->
+                <div style="width: 250px; background: #ffffff; border-right: 1px solid #e0e0e0; padding: 15px; overflow-y: auto;">
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Quick Access</h4>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">🏠</span>
+                        <span>Home</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user/Desktop')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">🖥️</span>
+                        <span>Desktop</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user/Documents')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">📄</span>
+                        <span>Documents</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user/Downloads')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">📥</span>
+                        <span>Downloads</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user/Pictures')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">🖼️</span>
+                        <span>Pictures</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user/Music')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">🎵</span>
+                        <span>Music</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/home/user/Videos')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">🎬</span>
+                        <span>Videos</span>
+                    </div>
+
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">System</h4>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/usr/bin')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">⚙️</span>
+                        <span>Applications</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/var/log')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">📋</span>
+                        <span>System Logs</span>
+                    </div>
+                    <div class="sidebar-item" onclick="navigateToQuickPath('/dev')" style="display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 6px; cursor: pointer; margin-bottom: 5px; transition: background 0.2s;">
+                        <span style="font-size: 18px;">🔌</span>
+                        <span>Devices</span>
+                    </div>
+
+                    <hr style="margin: 20px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+                    <h4 style="margin: 0 0 15px 0; color: #333; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">Storage Info</h4>
+                    <div style="font-size: 12px; color: #666; margin-bottom: 10px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span>Used:</span>
+                            <span id="storage-used">179 GB</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>Free:</span>
+                            <span id="storage-free">333 GB</span>
+                        </div>
+                        <div style="background: #e0e0e0; height: 8px; border-radius: 4px; overflow: hidden;">
+                            <div style="background: linear-gradient(90deg, #28a745, #ffc107, #dc3545); height: 100%; width: 35%; transition: width 0.3s ease;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main File Area -->
+                <div style="flex: 1; background: #ffffff; overflow-y: auto;">
+                    <div id="file-content" style="padding: 20px;">
+                        <!-- Files will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calculator Window -->
+    <div class="window" id="calculator-window" style="left: 200px; top: 100px; width: 350px; height: 500px;">
+        <div class="window-header">
+            <div class="window-title">Calculator - Advanced Scientific</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('calculator-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('calculator-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('calculator-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="padding: 15px;">
+            <div style="background: #000; color: white; padding: 15px; margin-bottom: 15px; text-align: right; font-size: 24px; border-radius: 4px;">0</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;">
+                <button style="padding: 15px; border: none; background: #f8f9fa; border-radius: 4px; cursor: pointer;">C</button>
+                <button style="padding: 15px; border: none; background: #f8f9fa; border-radius: 4px; cursor: pointer;">±</button>
+                <button style="padding: 15px; border: none; background: #f8f9fa; border-radius: 4px; cursor: pointer;">%</button>
+                <button style="padding: 15px; border: none; background: #E95420; color: white; border-radius: 4px; cursor: pointer;">÷</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">7</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">8</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">9</button>
+                <button style="padding: 15px; border: none; background: #E95420; color: white; border-radius: 4px; cursor: pointer;">×</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">4</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">5</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">6</button>
+                <button style="padding: 15px; border: none; background: #E95420; color: white; border-radius: 4px; cursor: pointer;">−</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">1</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">2</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">3</button>
+                <button style="padding: 15px; border: none; background: #E95420; color: white; border-radius: 4px; cursor: pointer;">+</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer; grid-column: span 2;">0</button>
+                <button style="padding: 15px; border: none; background: #fff; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">.</button>
+                <button style="padding: 15px; border: none; background: #E95420; color: white; border-radius: 4px; cursor: pointer;">=</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Games Window -->
+    <div class="window" id="games-window" style="left: 400px; top: 100px; width: 800px; height: 600px;">
+        <div class="window-header">
+            <div class="window-title">Games - Kronos Entertainment Center</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('games-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('games-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('games-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <h2 style="margin-bottom: 20px;">🎮 Game Center</h2>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+                <div style="border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#E95420'" onmouseout="this.style.borderColor='#ddd'">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🐍</div>
+                    <h3>Snake</h3>
+                    <p style="color: #666; font-size: 14px;">Classic arcade game</p>
+                </div>
+                <div style="border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#E95420'" onmouseout="this.style.borderColor='#ddd'">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🧩</div>
+                    <h3>Tetris</h3>
+                    <p style="color: #666; font-size: 14px;">Block puzzle game</p>
+                </div>
+                <div style="border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#E95420'" onmouseout="this.style.borderColor='#ddd'">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🏓</div>
+                    <h3>Pong</h3>
+                    <p style="color: #666; font-size: 14px;">Classic paddle game</p>
+                </div>
+                <div style="border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#E95420'" onmouseout="this.style.borderColor='#ddd'">
+                    <div style="font-size: 48px; margin-bottom: 10px;">💣</div>
+                    <h3>Minesweeper</h3>
+                    <p style="color: #666; font-size: 14px;">Logic puzzle game</p>
+                </div>
+                <div style="border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#E95420'" onmouseout="this.style.borderColor='#ddd'">
+                    <div style="font-size: 48px; margin-bottom: 10px;">♟️</div>
+                    <h3>Chess</h3>
+                    <p style="color: #666; font-size: 14px;">Strategy board game</p>
+                </div>
+                <div style="border: 2px solid #ddd; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='#E95420'" onmouseout="this.style.borderColor='#ddd'">
+                    <div style="font-size: 48px; margin-bottom: 10px;">🃏</div>
+                    <h3>Solitaire</h3>
+                    <p style="color: #666; font-size: 14px;">Classic card game</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Window -->
+    <div class="window" id="settings-window" style="left: 200px; top: 50px; width: 900px; height: 700px;">
+        <div class="window-header">
+            <div class="window-title">Settings - Kronos System Configuration</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('settings-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('settings-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('settings-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="padding: 0;">
+            <div style="display: flex; height: 100%;">
+                <!-- Settings Sidebar -->
+                <div id="settings-sidebar" style="width: 250px; background: #f8f9fa; border-right: 1px solid #dee2e6; padding: 15px; overflow-y: auto;">
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #333; font-size: 16px;">System</h4>
+                        <div class="settings-category active" data-category="display" style="margin-bottom: 8px; padding: 10px; background: #E95420; color: white; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🖥️</span>
+                            <span>Display & Graphics</span>
+                        </div>
+                        <div class="settings-category" data-category="sound" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🔊</span>
+                            <span>Sound & Audio</span>
+                        </div>
+                        <div class="settings-category" data-category="network" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🌐</span>
+                            <span>Network & Internet</span>
+                        </div>
+                        <div class="settings-category" data-category="power" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">⚡</span>
+                            <span>Power & Battery</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #333; font-size: 16px;">Security & Privacy</h4>
+                        <div class="settings-category" data-category="security" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🔒</span>
+                            <span>Security & Firewall</span>
+                        </div>
+                        <div class="settings-category" data-category="privacy" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🛡️</span>
+                            <span>Privacy & Data</span>
+                        </div>
+                        <div class="settings-category" data-category="users" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">👤</span>
+                            <span>Users & Accounts</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4 style="margin-bottom: 15px; color: #333; font-size: 16px;">Personalization</h4>
+                        <div class="settings-category" data-category="appearance" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🎨</span>
+                            <span>Appearance & Themes</span>
+                        </div>
+                        <div class="settings-category" data-category="desktop" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🏠</span>
+                            <span>Desktop & Wallpaper</span>
+                        </div>
+                        <div class="settings-category" data-category="accessibility" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">♿</span>
+                            <span>Accessibility</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h4 style="margin-bottom: 15px; color: #333; font-size: 16px;">System Info</h4>
+                        <div class="settings-category" data-category="about" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">ℹ️</span>
+                            <span>About Kronos OS</span>
+                        </div>
+                        <div class="settings-category" data-category="updates" style="margin-bottom: 8px; padding: 10px; border-radius: 6px; cursor: pointer; display: flex; align-items: center; gap: 10px; transition: all 0.2s ease;">
+                            <span style="font-size: 18px;">🔄</span>
+                            <span>System Updates</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Content Area -->
+                <div id="settings-content" style="flex: 1; padding: 25px; overflow-y: auto; background: white;">
+                    <!-- Content will be dynamically loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced System Monitor - Borderless Real-Time Dashboard -->
+    <div class="window borderless" id="monitor-window" style="left: 200px; top: 40px; width: 950px; height: 700px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="window-header" style="background: linear-gradient(135deg, #1e3c72, #2a5298); border: none;">
+            <div class="window-title" style="color: #ffffff; font-weight: bold;">📊 Kronos Real-Time System Monitor - Arduino/Mini Computer</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('monitor-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('monitor-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('monitor-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="background: #1a1a1a; color: #ffffff; padding: 15px; border: none;">
+            <!-- Real-Time System Metrics Grid -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <!-- CPU Monitor -->
+                <div style="background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 12px; padding: 15px; border: none;">
+                    <h4 style="margin-bottom: 10px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                        🖥️ CPU Usage <span id="cpu-temp" style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">42°C</span>
+                    </h4>
+                    <div style="background: rgba(255,255,255,0.2); height: 25px; border-radius: 12px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="cpu-bar" style="background: linear-gradient(90deg, #00ff41, #ffff00, #ff4757); height: 100%; width: 45%; transition: width 0.3s ease; border-radius: 12px;"></div>
+                    </div>
+                    <div style="font-size: 14px; color: #ffffff;">
+                        <span id="cpu-percent">45</span>% - <span id="cpu-freq">3.6</span> GHz
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 4px;">
+                        Cores: <span id="cpu-cores">8</span> | Threads: <span id="cpu-threads">16</span>
+                    </div>
+                </div>
+
+                <!-- Memory Monitor -->
+                <div style="background: linear-gradient(135deg, #f093fb, #f5576c); border-radius: 12px; padding: 15px; border: none;">
+                    <h4 style="margin-bottom: 10px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                        💾 Memory <span id="mem-type" style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">DDR4</span>
+                    </h4>
+                    <div style="background: rgba(255,255,255,0.2); height: 25px; border-radius: 12px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="memory-bar" style="background: linear-gradient(90deg, #00ff41, #ffff00, #ff4757); height: 100%; width: 62%; transition: width 0.3s ease; border-radius: 12px;"></div>
+                    </div>
+                    <div style="font-size: 14px; color: #ffffff;">
+                        <span id="memory-used">10.2</span> GB / <span id="memory-total">16</span> GB
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 4px;">
+                        Available: <span id="memory-available">5.8</span> GB | Cached: <span id="memory-cached">2.1</span> GB
+                    </div>
+                </div>
+
+                <!-- Storage Monitor -->
+                <div style="background: linear-gradient(135deg, #4facfe, #00f2fe); border-radius: 12px; padding: 15px; border: none;">
+                    <h4 style="margin-bottom: 10px; color: #ffffff; display: flex; align-items: center; gap: 8px;">
+                        💽 Storage <span id="storage-type" style="font-size: 12px; background: rgba(255,255,255,0.2); padding: 2px 6px; border-radius: 4px;">SSD</span>
+                    </h4>
+                    <div style="background: rgba(255,255,255,0.2); height: 25px; border-radius: 12px; overflow: hidden; margin-bottom: 8px;">
+                        <div id="storage-bar" style="background: linear-gradient(90deg, #00ff41, #ffff00, #ff4757); height: 100%; width: 35%; transition: width 0.3s ease; border-radius: 12px;"></div>
+                    </div>
+                    <div style="font-size: 14px; color: #ffffff;">
+                        <span id="storage-used">179</span> GB / <span id="storage-total">512</span> GB
+                    </div>
+                    <div style="font-size: 11px; color: rgba(255,255,255,0.8); margin-top: 4px;">
+                        Free: <span id="storage-free">333</span> GB | R/W: <span id="storage-speed">550/520</span> MB/s
+                    </div>
+                </div>
+            </div>
+
+            <!-- Arduino/IoT Sensors Section -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 20px;">
+                <!-- Environmental Sensors -->
+                <div style="background: linear-gradient(135deg, #a8edea, #fed6e3); color: #333; border-radius: 12px; padding: 15px; border: none;">
+                    <h4 style="margin-bottom: 15px; color: #333; display: flex; align-items: center; gap: 8px;">
+                        🌡️ Environmental Sensors
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                        <div>Temperature: <span id="env-temp" style="font-weight: bold; color: #e74c3c;">24.5°C</span></div>
+                        <div>Humidity: <span id="env-humidity" style="font-weight: bold; color: #3498db;">65%</span></div>
+                        <div>Pressure: <span id="env-pressure" style="font-weight: bold; color: #9b59b6;">1013 hPa</span></div>
+                        <div>Light: <span id="env-light" style="font-weight: bold; color: #f39c12;">450 lux</span></div>
+                        <div>Air Quality: <span id="env-air" style="font-weight: bold; color: #27ae60;">Good</span></div>
+                        <div>UV Index: <span id="env-uv" style="font-weight: bold; color: #e67e22;">3.2</span></div>
+                    </div>
+                </div>
+
+                <!-- GPIO & Hardware Status -->
+                <div style="background: linear-gradient(135deg, #ffecd2, #fcb69f); color: #333; border-radius: 12px; padding: 15px; border: none;">
+                    <h4 style="margin-bottom: 15px; color: #333; display: flex; align-items: center; gap: 8px;">
+                        🔌 GPIO & Hardware Status
+                    </h4>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 13px;">
+                        <div>GPIO Pins: <span id="gpio-active" style="font-weight: bold; color: #27ae60;">8/40 Active</span></div>
+                        <div>I2C Bus: <span id="i2c-status" style="font-weight: bold; color: #3498db;">Online</span></div>
+                        <div>SPI Bus: <span id="spi-status" style="font-weight: bold; color: #9b59b6;">Ready</span></div>
+                        <div>UART: <span id="uart-status" style="font-weight: bold; color: #e74c3c;">115200 bps</span></div>
+                        <div>PWM Channels: <span id="pwm-channels" style="font-weight: bold; color: #f39c12;">4/16 Used</span></div>
+                        <div>ADC Channels: <span id="adc-channels" style="font-weight: bold; color: #e67e22;">6/8 Active</span></div>
+                    </div>
+                </div>
+            </div>
+            <div style="border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
+                <h4 style="margin-bottom: 15px;">📊 Running Processes</h4>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 10px; background: #f8f9fa; border-radius: 4px; font-weight: bold; margin-bottom: 10px;">
+                    <div>Process Name</div>
+                    <div>CPU %</div>
+                    <div>Memory</div>
+                    <div>PID</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 8px; border-bottom: 1px solid #eee;">
+                    <div>kronos-desktop</div>
+                    <div>15.2%</div>
+                    <div>245 MB</div>
+                    <div>1024</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 8px; border-bottom: 1px solid #eee;">
+                    <div>file-manager</div>
+                    <div>8.7%</div>
+                    <div>128 MB</div>
+                    <div>2048</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 8px; border-bottom: 1px solid #eee;">
+                    <div>terminal</div>
+                    <div>3.1%</div>
+                    <div>64 MB</div>
+                    <div>3072</div>
+                </div>
+                <div style="display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; padding: 8px;">
+                    <div>system-monitor</div>
+                    <div>2.8%</div>
+                    <div>89 MB</div>
+                    <div>4096</div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">End Process</button>
+                <button style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Refresh</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Music Player Window -->
+    <div class="window" id="music-window" style="left: 350px; top: 140px; width: 600px; height: 450px;">
+        <div class="window-header">
+            <div class="window-title">Music Player - Kronos Audio</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('music-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('music-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('music-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <div style="width: 200px; height: 200px; background: linear-gradient(45deg, #E95420, #D44414); border-radius: 12px; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; color: white; font-size: 48px;">🎵</div>
+                <h3 style="margin-bottom: 5px;">Now Playing</h3>
+                <h4 style="color: #666; margin-bottom: 5px;">Kronos Theme Song</h4>
+                <p style="color: #999; font-size: 14px;">Kronos OS Soundtrack</p>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <div style="background: #f8f9fa; height: 6px; border-radius: 3px; margin-bottom: 10px;">
+                    <div style="background: #E95420; height: 100%; width: 35%; border-radius: 3px;"></div>
+                </div>
+                <div style="display: flex; justify-content: space-between; font-size: 12px; color: #666;">
+                    <span>1:23</span>
+                    <span>3:45</span>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: center; align-items: center; gap: 15px; margin-bottom: 20px;">
+                <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">🔀</button>
+                <button style="background: none; border: none; font-size: 32px; cursor: pointer; color: #333;">⏮️</button>
+                <button style="background: #E95420; border: none; font-size: 32px; cursor: pointer; color: white; border-radius: 50%; width: 60px; height: 60px;">⏸️</button>
+                <button style="background: none; border: none; font-size: 32px; cursor: pointer; color: #333;">⏭️</button>
+                <button style="background: none; border: none; font-size: 24px; cursor: pointer; color: #666;">🔁</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 18px;">🔊</span>
+                <input type="range" min="0" max="100" value="75" style="flex: 1;">
+                <span style="font-size: 12px; color: #666;">75%</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Video Player Window -->
+    <div class="window" id="video-window" style="left: 200px; top: 60px; width: 800px; height: 600px;">
+        <div class="window-header">
+            <div class="window-title">Video Player - Kronos Media</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('video-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('video-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('video-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="padding: 0;">
+            <div style="background: #000; height: 400px; display: flex; align-items: center; justify-content: center; position: relative;">
+                <div style="color: white; text-align: center;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">🎬</div>
+                    <h3 style="margin-bottom: 10px;">Kronos OS Demo Video</h3>
+                    <p style="color: #ccc;">Click play to start playback</p>
+                </div>
+                <div style="position: absolute; bottom: 20px; left: 20px; right: 20px;">
+                    <div style="background: rgba(255,255,255,0.2); height: 4px; border-radius: 2px; margin-bottom: 10px;">
+                        <div style="background: #E95420; height: 100%; width: 25%; border-radius: 2px;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <button style="background: #E95420; border: none; color: white; border-radius: 50%; width: 40px; height: 40px; cursor: pointer; font-size: 16px;">▶️</button>
+                            <span style="color: white; font-size: 14px;">2:15 / 8:42</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <button style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">🔊</button>
+                            <button style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">⚙️</button>
+                            <button style="background: none; border: none; color: white; cursor: pointer; font-size: 18px;">⛶</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div style="padding: 15px; background: #f8f9fa;">
+                <h4 style="margin-bottom: 10px;">📁 Media Library</h4>
+                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px;">
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; background: white;">
+                        <div style="font-size: 24px; margin-bottom: 5px;">🎬</div>
+                        <div style="font-size: 12px;">Demo Video</div>
+                    </div>
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; background: white;">
+                        <div style="font-size: 24px; margin-bottom: 5px;">🎥</div>
+                        <div style="font-size: 12px;">Tutorial</div>
+                    </div>
+                    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; background: white;">
+                        <div style="font-size: 24px; margin-bottom: 5px;">📹</div>
+                        <div style="font-size: 12px;">Recording</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Kronos App Store Window -->
+    <div class="window borderless" id="appstore-window" style="left: 150px; top: 30px; width: 1000px; height: 750px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+        <div class="window-header" style="background: linear-gradient(135deg, #667eea, #764ba2); border: none;">
+            <div class="window-title" style="color: #ffffff; font-weight: bold;">🏪 Kronos App Store - Discover Amazing Applications</div>
+            <div class="window-controls">
+                <button class="window-control minimize" onclick="minimizeWindow('appstore-window')">−</button>
+                <button class="window-control maximize" onclick="maximizeWindow('appstore-window')">□</button>
+                <button class="window-control close" onclick="closeWindow('appstore-window')">×</button>
+            </div>
+        </div>
+        <div class="window-content" style="background: #f8f9fa; padding: 0; border: none; overflow-y: auto;">
+            <!-- App Store Header -->
+            <div style="background: linear-gradient(135deg, #667eea, #764ba2); padding: 20px; color: white;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                    <h2 style="margin: 0; font-size: 24px;">Welcome to Kronos App Store</h2>
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="refreshAppStore()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">🔄 Refresh</button>
+                        <button onclick="showMyApps()" style="background: rgba(255,255,255,0.2); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">📱 My Apps</button>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 15px; align-items: center;">
+                    <input type="text" id="app-search" placeholder="Search applications..." style="flex: 1; padding: 10px; border: none; border-radius: 6px; font-size: 14px;" onkeyup="searchApps()">
+                    <select id="category-filter" onchange="filterByCategory()" style="padding: 10px; border: none; border-radius: 6px; font-size: 14px;">
+                        <option value="all">All Categories</option>
+                        <option value="productivity">Productivity</option>
+                        <option value="development">Development</option>
+                        <option value="education">Education</option>
+                        <option value="games">Games</option>
+                        <option value="multimedia">Multimedia</option>
+                        <option value="utilities">Utilities</option>
+                        <option value="arduino">Arduino/IoT</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Featured Apps Section -->
+            <div style="padding: 20px;">
+                <h3 style="margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px;">
+                    ⭐ Featured Applications
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px;">
+                    <!-- Featured App 1 -->
+                    <div class="app-card featured" style="background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 12px; padding: 20px; cursor: pointer;" onclick="showAppDetails('code-editor')">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="font-size: 48px;">💻</div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 18px;">Kronos Code Editor</h4>
+                                <div style="font-size: 14px; opacity: 0.9;">Professional IDE for Arduino & C++</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
+                            Advanced code editor with syntax highlighting, debugging, and Arduino integration.
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">Development</span>
+                            <button onclick="installApp('code-editor'); event.stopPropagation();" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Install</button>
+                        </div>
+                    </div>
+
+                    <!-- Featured App 2 -->
+                    <div class="app-card featured" style="background: linear-gradient(135deg, #f093fb, #f5576c); color: white; border-radius: 12px; padding: 20px; cursor: pointer;" onclick="showAppDetails('circuit-sim')">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="font-size: 48px;">🔌</div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 18px;">Circuit Simulator</h4>
+                                <div style="font-size: 14px; opacity: 0.9;">Design & Test Electronic Circuits</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
+                            Interactive circuit design tool with component library and real-time simulation.
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">Education</span>
+                            <button onclick="installApp('circuit-sim'); event.stopPropagation();" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Install</button>
+                        </div>
+                    </div>
+
+                    <!-- Featured App 3 -->
+                    <div class="app-card featured" style="background: linear-gradient(135deg, #4facfe, #00f2fe); color: white; border-radius: 12px; padding: 20px; cursor: pointer;" onclick="showAppDetails('iot-dashboard')">
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="font-size: 48px;">📊</div>
+                            <div>
+                                <h4 style="margin: 0; font-size: 18px;">IoT Dashboard</h4>
+                                <div style="font-size: 14px; opacity: 0.9;">Real-time Sensor Monitoring</div>
+                            </div>
+                        </div>
+                        <div style="font-size: 14px; opacity: 0.8; margin-bottom: 15px;">
+                            Monitor and visualize data from multiple IoT devices and sensors in real-time.
+                        </div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="background: rgba(255,255,255,0.2); padding: 4px 8px; border-radius: 4px; font-size: 12px;">Arduino/IoT</span>
+                            <button onclick="installApp('iot-dashboard'); event.stopPropagation();" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Install</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Categories Section -->
+                <h3 style="margin-bottom: 20px; color: #333; display: flex; align-items: center; gap: 10px;">
+                    📂 Browse by Category
+                </h3>
+                <div id="apps-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                    <!-- Apps will be populated by JavaScript -->
+                </div>
+
+                <!-- Coming Soon Section -->
+                <h3 style="margin: 30px 0 20px 0; color: #333; display: flex; align-items: center; gap: 10px;">
+                    🚀 Coming Soon
+                </h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                    <div class="app-card coming-soon" style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 12px; padding: 20px; text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">🎮</div>
+                        <h4 style="margin: 0 0 5px 0; color: #666;">3D Game Engine</h4>
+                        <div style="font-size: 14px; color: #999;">Advanced 3D graphics and physics</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #E95420; font-weight: bold;">Q2 2024</div>
+                    </div>
+                    <div class="app-card coming-soon" style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 12px; padding: 20px; text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">🤖</div>
+                        <h4 style="margin: 0 0 5px 0; color: #666;">AI Assistant</h4>
+                        <div style="font-size: 14px; color: #999;">Intelligent coding companion</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #E95420; font-weight: bold;">Q3 2024</div>
+                    </div>
+                    <div class="app-card coming-soon" style="background: #f8f9fa; border: 2px dashed #ddd; border-radius: 12px; padding: 20px; text-align: center;">
+                        <div style="font-size: 48px; margin-bottom: 10px; opacity: 0.5;">🌐</div>
+                        <h4 style="margin: 0 0 5px 0; color: #666;">Web Browser</h4>
+                        <div style="font-size: 14px; color: #999;">Full-featured web browsing</div>
+                        <div style="margin-top: 10px; font-size: 12px; color: #E95420; font-weight: bold;">Q4 2024</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let openWindows = new Set();
+        let activeWindow = null;
+        let startMenuOpen = false;
+
+        // Initialize the OS (moved to combined initialization below)
+
+        // Main function to open windows - SIMPLE AND RELIABLE
+        function openWindow(appName) {
+            console.log('🚀 Opening:', appName);
+
+            const windowId = appName + '-window';
+            const windowElement = document.getElementById(windowId);
+
+            if (!windowElement) {
+                showNotification(`${appName} not available`, 'error');
+                console.error('❌ Window not found:', windowId);
+                return;
+            }
+
+            // If window is already open but minimized, restore it
+            if (openWindows.has(windowId) && windowElement.classList.contains('minimized')) {
+                restoreWindow(windowId);
+                return;
+            }
+
+            // If window is already open and visible, bring to front
+            if (openWindows.has(windowId) && windowElement.style.display === 'block') {
+                bringToFront(windowId);
+                return;
+            }
+
+            // Minimize all other windows instead of closing them
+            document.querySelectorAll('.window').forEach(w => {
+                if (w.style.display === 'block' && w.id !== windowId) {
+                    w.classList.add('minimized');
+                    w.style.display = 'none';
+                }
+            });
+
+            // Show this window
+            windowElement.classList.remove('minimized');
+            windowElement.classList.add('show');
+            windowElement.style.display = 'block';
+            windowElement.style.zIndex = getNextZIndex();
+
+            // Update state
+            if (!openWindows.has(windowId)) {
+                openWindows.add(windowId);
+            }
+            activeWindow = windowId;
+
+            // Update UI
+            updateTaskbar();
+            closeStartMenu();
+
+            console.log('✅ Window opened:', windowId);
+            showNotification(`${getAppName(appName)} opened!`, 'success');
+        }
+
+        function bringToFront(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                // Minimize all other windows
+                document.querySelectorAll('.window').forEach(w => {
+                    if (w.style.display === 'block' && w.id !== windowId) {
+                        w.classList.add('minimized');
+                        w.style.display = 'none';
+                    }
+                });
+
+                // Bring this window to front
+                windowElement.style.zIndex = getNextZIndex();
+                windowElement.classList.remove('minimized');
+                windowElement.style.display = 'block';
+                activeWindow = windowId;
+                updateTaskbar();
+            }
+        }
+
+        let currentZIndex = 1000;
+        function getNextZIndex() {
+            return ++currentZIndex;
+        }
+
+        function closeWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                windowElement.classList.remove('show');
+                windowElement.style.display = 'none';
+                openWindows.delete(windowId);
+                if (activeWindow === windowId) {
+                    activeWindow = null;
+                }
+                updateTaskbar();
+                showNotification('Window closed', 'info');
+            }
+        }
+
+        function minimizeWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                // Add minimizing animation
+                windowElement.classList.add('minimizing');
+
+                // After animation, hide window and update state
+                setTimeout(() => {
+                    windowElement.classList.remove('minimizing');
+                    windowElement.classList.add('minimized');
+                    windowElement.style.display = 'none';
+
+                    // Update taskbar item to show minimized state
+                    updateTaskbarItemState(windowId, 'minimized');
+
+                    showNotification('Window minimized to taskbar', 'info');
+                }, 300);
+            }
+        }
+
+        function restoreWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                // Remove minimized class and show window
+                windowElement.classList.remove('minimized');
+                windowElement.style.display = 'block';
+
+                // Add restoring animation
+                windowElement.classList.add('restoring');
+
+                // Bring window to front
+                bringToFront(windowId);
+
+                // Update taskbar item to show active state
+                updateTaskbarItemState(windowId, 'active');
+
+                // Remove animation class after animation completes
+                setTimeout(() => {
+                    windowElement.classList.remove('restoring');
+                }, 300);
+
+                showNotification('Window restored from taskbar', 'info');
+            }
+        }
+
+        function updateTaskbarItemState(windowId, state) {
+            const taskbarItem = document.querySelector(`[onclick*="${windowId}"]`);
+            if (taskbarItem) {
+                // Remove all state classes
+                taskbarItem.classList.remove('minimized', 'active', 'inactive');
+
+                // Add current state class
+                taskbarItem.classList.add(state);
+
+                // Update visual appearance based on state
+                if (state === 'minimized') {
+                    taskbarItem.style.opacity = '0.7';
+                    taskbarItem.style.background = 'linear-gradient(135deg, #6c757d, #495057)';
+                    taskbarItem.style.border = '2px dashed #adb5bd';
+                } else if (state === 'active') {
+                    taskbarItem.style.opacity = '1';
+                    taskbarItem.style.background = 'linear-gradient(135deg, #E95420, #D44414)';
+                    taskbarItem.style.border = '2px solid #E95420';
+                } else {
+                    taskbarItem.style.opacity = '0.8';
+                    taskbarItem.style.background = 'linear-gradient(135deg, #495057, #343a40)';
+                    taskbarItem.style.border = '1px solid #6c757d';
+                }
+            }
+        }
+
+        function toggleWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                if (windowElement.classList.contains('minimized') || windowElement.style.display === 'none') {
+                    // Restore minimized window
+                    restoreWindow(windowId);
+                } else if (windowElement.style.display === 'block' || windowElement.style.display === '') {
+                    // Minimize visible window
+                    minimizeWindow(windowId);
+                } else {
+                    // Show hidden window
+                    const appName = windowId.replace('-window', '');
+                    openWindow(appName);
+                }
+            }
+        }
+
+        function maximizeWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                if (windowElement.style.width === '100vw') {
+                    // Restore
+                    windowElement.style.width = '';
+                    windowElement.style.height = '';
+                    windowElement.style.left = '';
+                    windowElement.style.top = '';
+                } else {
+                    // Maximize
+                    windowElement.style.width = '100vw';
+                    windowElement.style.height = 'calc(100vh - 50px)';
+                    windowElement.style.left = '0';
+                    windowElement.style.top = '0';
+                }
+                showNotification('Window toggled', 'info');
+            }
+        }
+
+        function toggleStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenuOpen = !startMenuOpen;
+
+            if (startMenuOpen) {
+                startMenu.classList.add('show');
+            } else {
+                startMenu.classList.remove('show');
+            }
+        }
+
+        function closeStartMenu() {
+            const startMenu = document.getElementById('start-menu');
+            startMenu.classList.remove('show');
+            startMenuOpen = false;
+        }
+
+        function updateTaskbar() {
+            const taskbarItems = document.getElementById('taskbar-items');
+            taskbarItems.innerHTML = '';
+
+            openWindows.forEach(windowId => {
+                const appName = windowId.replace('-window', '');
+                const windowElement = document.getElementById(windowId);
+                const item = document.createElement('div');
+
+                item.className = 'taskbar-item';
+                item.textContent = getAppName(appName);
+
+                // Determine window state and apply appropriate styling
+                if (windowElement) {
+                    if (windowElement.classList.contains('minimized') || windowElement.style.display === 'none') {
+                        item.classList.add('minimized');
+                        item.style.opacity = '0.7';
+                        item.style.background = 'linear-gradient(135deg, #6c757d, #495057)';
+                        item.style.border = '2px dashed #adb5bd';
+                        item.title = `${getAppName(appName)} (Minimized) - Click to restore`;
+                    } else if (windowId === activeWindow) {
+                        item.classList.add('active');
+                        item.style.opacity = '1';
+                        item.style.background = 'linear-gradient(135deg, #E95420, #D44414)';
+                        item.style.border = '2px solid #E95420';
+                        item.title = `${getAppName(appName)} (Active) - Click to minimize`;
+                    } else {
+                        item.classList.add('inactive');
+                        item.style.opacity = '0.8';
+                        item.style.background = 'linear-gradient(135deg, #495057, #343a40)';
+                        item.style.border = '1px solid #6c757d';
+                        item.title = `${getAppName(appName)} - Click to focus`;
+                    }
+                }
+
+                // Enhanced click handler for minimize/restore functionality
+                item.onclick = () => {
+                    toggleWindow(windowId);
+                };
+
+                // Add hover effects
+                item.addEventListener('mouseenter', () => {
+                    if (!item.classList.contains('active')) {
+                        item.style.transform = 'translateY(-2px)';
+                        item.style.boxShadow = '0 4px 12px rgba(0,0,0,0.3)';
+                    }
+                });
+
+                item.addEventListener('mouseleave', () => {
+                    item.style.transform = 'translateY(0)';
+                    item.style.boxShadow = '0 2px 8px rgba(0,0,0,0.2)';
+                });
+
+                taskbarItems.appendChild(item);
+            });
+        }
+
+        function updateClock() {
+            const clock = document.getElementById('clock');
+            const now = new Date();
+            const timeString = now.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            clock.textContent = timeString;
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = 'notification show';
+
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function getAppName(appName) {
+            const names = {
+                'terminal': 'Terminal',
+                'files': 'File Manager',
+                'calculator': 'Calculator',
+                'games': 'Games',
+                'settings': 'Settings',
+                'monitor': 'System Monitor',
+                'music': 'Music Player',
+                'video': 'Video Player'
+            };
+            return names[appName] || appName;
+        }
+
+        // Settings System Data
+        const settingsData = {
+            display: {
+                resolution: '1920x1080',
+                brightness: 80,
+                nightMode: true,
+                autoHideTaskbar: false,
+                scaling: 100,
+                orientation: 'landscape'
+            },
+            sound: {
+                masterVolume: 75,
+                systemSounds: true,
+                notificationSounds: true,
+                outputDevice: 'speakers',
+                inputDevice: 'microphone'
+            },
+            network: {
+                wifiEnabled: true,
+                currentNetwork: 'Kronos-WiFi',
+                ipAddress: '192.168.1.100',
+                proxyEnabled: false
+            },
+            power: {
+                powerPlan: 'balanced',
+                sleepAfter: 30,
+                hibernateAfter: 120,
+                batteryPercentage: 85
+            },
+            security: {
+                firewallEnabled: true,
+                antivirusEnabled: true,
+                autoUpdates: true,
+                passwordRequired: true
+            },
+            privacy: {
+                locationServices: false,
+                telemetry: false,
+                crashReports: true,
+                analytics: false
+            },
+            users: {
+                currentUser: 'admin',
+                autoLogin: false,
+                guestAccount: false,
+                parentalControls: false
+            },
+            appearance: {
+                theme: 'light',
+                accentColor: '#E95420',
+                fontSize: 'medium',
+                animations: true
+            },
+            desktop: {
+                wallpaper: 'default',
+                iconSize: 'medium',
+                showDesktopIcons: true,
+                taskbarPosition: 'bottom'
+            },
+            accessibility: {
+                highContrast: false,
+                largeText: false,
+                screenReader: false,
+                magnifier: false
+            }
+        };
+
+        // Settings Content Templates
+        const settingsTemplates = {
+            display: `
+                <div style="max-width: 600px;">
+                    <h2 style="margin-bottom: 25px; color: #333; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 28px;">🖥️</span>
+                        Display & Graphics Settings
+                    </h2>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Screen Resolution</h4>
+                        <select id="resolution-select" style="width: 250px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px;">
+                            <option value="3840x2160">3840x2160 (4K UHD)</option>
+                            <option value="2560x1440">2560x1440 (QHD)</option>
+                            <option value="1920x1080" selected>1920x1080 (Full HD)</option>
+                            <option value="1680x1050">1680x1050 (WSXGA+)</option>
+                            <option value="1440x900">1440x900 (WXGA+)</option>
+                            <option value="1366x768">1366x768 (HD)</option>
+                        </select>
+                        <p style="color: #666; font-size: 12px; margin-top: 5px;">Recommended: 1920x1080</p>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Display Brightness</h4>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 18px;">🔅</span>
+                            <input type="range" id="brightness-slider" min="0" max="100" value="80" style="flex: 1; height: 6px;">
+                            <span style="font-size: 18px;">🔆</span>
+                            <span id="brightness-value" style="min-width: 40px; font-weight: bold;">80%</span>
+                        </div>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Display Scaling</h4>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="scale-btn" data-scale="75" style="padding: 10px 15px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">75%</button>
+                            <button class="scale-btn active" data-scale="100" style="padding: 10px 15px; border: 1px solid #E95420; background: #E95420; color: white; border-radius: 4px; cursor: pointer;">100%</button>
+                            <button class="scale-btn" data-scale="125" style="padding: 10px 15px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">125%</button>
+                            <button class="scale-btn" data-scale="150" style="padding: 10px 15px; border: 1px solid #ddd; background: white; border-radius: 4px; cursor: pointer;">150%</button>
+                        </div>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Display Options</h4>
+                        <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+                            <input type="checkbox" id="night-mode" checked style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 16px;">🌙 Enable Night Mode</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+                            <input type="checkbox" id="auto-hide-taskbar" style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 16px;">📱 Auto-hide Taskbar</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" id="show-desktop-icons" checked style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 16px;">🖥️ Show Desktop Icons</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="applyDisplaySettings()" style="background: #E95420; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold;">Apply Changes</button>
+                        <button onclick="resetDisplaySettings()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">Reset to Default</button>
+                    </div>
+                </div>
+            `,
+
+            sound: `
+                <div style="max-width: 600px;">
+                    <h2 style="margin-bottom: 25px; color: #333; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 28px;">🔊</span>
+                        Sound & Audio Settings
+                    </h2>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Master Volume</h4>
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <span style="font-size: 18px;">🔇</span>
+                            <input type="range" id="master-volume" min="0" max="100" value="75" style="flex: 1; height: 6px;">
+                            <span style="font-size: 18px;">🔊</span>
+                            <span id="volume-value" style="min-width: 40px; font-weight: bold;">75%</span>
+                        </div>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Audio Devices</h4>
+                        <div style="margin-bottom: 15px;">
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Output Device:</label>
+                            <select style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option>🔊 Built-in Speakers</option>
+                                <option>🎧 Headphones</option>
+                                <option>📻 Bluetooth Audio</option>
+                                <option>🖥️ HDMI Audio</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold;">Input Device:</label>
+                            <select style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option>🎤 Built-in Microphone</option>
+                                <option>🎙️ External Microphone</option>
+                                <option>🎧 Headset Microphone</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Sound Options</h4>
+                        <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 16px;">🔔 System Sounds</span>
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 12px; cursor: pointer;">
+                            <input type="checkbox" checked style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 16px;">📢 Notification Sounds</span>
+                        </label>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" style="margin-right: 10px; transform: scale(1.2);">
+                            <span style="font-size: 16px;">🎵 Startup Sound</span>
+                        </label>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="applySoundSettings()" style="background: #E95420; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold;">Apply Changes</button>
+                        <button onclick="testSound()" style="background: #28a745; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">Test Sound</button>
+                    </div>
+                </div>
+            `,
+
+            network: `
+                <div style="max-width: 700px;">
+                    <h2 style="margin-bottom: 25px; color: #333; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 28px;">🌐</span>
+                        Network & Internet Settings
+                    </h2>
+
+                    <!-- Connection Status -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">Connection Status</h4>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="width: 12px; height: 12px; background: #28a745; border-radius: 50%; animation: pulse 2s infinite;"></div>
+                            <div>
+                                <div style="font-weight: bold; color: #28a745;">Connected to Internet</div>
+                                <div style="color: #666; font-size: 14px;">Kronos-WiFi • 192.168.1.100</div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="runNetworkDiagnostics()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">🔍 Diagnose</button>
+                            <button onclick="refreshNetworkStatus()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">🔄 Refresh</button>
+                        </div>
+                    </div>
+
+                    <!-- WiFi Settings -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h4>📶 WiFi Networks</h4>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" id="wifi-enabled" checked style="margin-right: 8px; transform: scale(1.2);">
+                                <span>WiFi Enabled</span>
+                            </label>
+                        </div>
+
+                        <div id="wifi-networks" style="margin-bottom: 15px;">
+                            <div class="network-item connected" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 2px solid #28a745; border-radius: 6px; margin-bottom: 8px; cursor: pointer;">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 18px;">📶</span>
+                                    <div>
+                                        <div style="font-weight: bold;">Kronos-WiFi</div>
+                                        <div style="font-size: 12px; color: #28a745;">Connected • Secured</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 12px; color: #666;">Signal: Strong</span>
+                                    <button onclick="disconnectWiFi()" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Disconnect</button>
+                                </div>
+                            </div>
+
+                            <div class="network-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; cursor: pointer;" onclick="connectToNetwork('Home-Network')">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 18px;">📶</span>
+                                    <div>
+                                        <div style="font-weight: bold;">Home-Network</div>
+                                        <div style="font-size: 12px; color: #666;">Secured • WPA2</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 12px; color: #666;">Signal: Good</span>
+                                    <button style="background: #E95420; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Connect</button>
+                                </div>
+                            </div>
+
+                            <div class="network-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; cursor: pointer;" onclick="connectToNetwork('Office-WiFi')">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 18px;">📶</span>
+                                    <div>
+                                        <div style="font-weight: bold;">Office-WiFi</div>
+                                        <div style="font-size: 12px; color: #666;">Secured • WPA3</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 12px; color: #666;">Signal: Weak</span>
+                                    <button style="background: #E95420; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Connect</button>
+                                </div>
+                            </div>
+
+                            <div class="network-item" style="display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; cursor: pointer;" onclick="connectToNetwork('Public-WiFi')">
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <span style="font-size: 18px;">📶</span>
+                                    <div>
+                                        <div style="font-weight: bold;">Public-WiFi</div>
+                                        <div style="font-size: 12px; color: #ffc107;">Open Network</div>
+                                    </div>
+                                </div>
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    <span style="font-size: 12px; color: #666;">Signal: Good</span>
+                                    <button style="background: #E95420; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Connect</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="scanForNetworks()" style="background: #007bff; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">🔍 Scan for Networks</button>
+                            <button onclick="addHiddenNetwork()" style="background: #6c757d; color: white; border: none; padding: 10px 16px; border-radius: 4px; cursor: pointer;">➕ Add Hidden Network</button>
+                        </div>
+                    </div>
+
+                    <!-- Ethernet Settings -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">🔌 Ethernet Connection</h4>
+                        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                            <div style="width: 12px; height: 12px; background: #6c757d; border-radius: 50%;"></div>
+                            <div>
+                                <div style="font-weight: bold; color: #6c757d;">Not Connected</div>
+                                <div style="color: #666; font-size: 14px;">No ethernet cable detected</div>
+                            </div>
+                        </div>
+                        <label style="display: flex; align-items: center; cursor: pointer;">
+                            <input type="checkbox" style="margin-right: 8px; transform: scale(1.2);">
+                            <span>Enable ethernet when available</span>
+                        </label>
+                    </div>
+
+                    <!-- Advanced Network Settings -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">⚙️ Advanced Settings</h4>
+
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="margin-bottom: 10px;">DNS Settings</h5>
+                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #666;">Primary DNS:</label>
+                                    <input type="text" value="8.8.8.8" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #666;">Secondary DNS:</label>
+                                    <input type="text" value="8.8.4.4" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-family: monospace;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="margin-bottom: 10px;">Proxy Settings</h5>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" id="proxy-enabled" style="margin-right: 8px; transform: scale(1.2);">
+                                <span>Use proxy server</span>
+                            </label>
+                            <div id="proxy-settings" style="display: none; grid-template-columns: 2fr 1fr; gap: 10px;">
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #666;">Proxy Address:</label>
+                                    <input type="text" placeholder="proxy.example.com" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                                <div>
+                                    <label style="display: block; margin-bottom: 5px; font-size: 12px; color: #666;">Port:</label>
+                                    <input type="text" placeholder="8080" style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="margin-bottom: 20px;">
+                            <h5 style="margin-bottom: 10px;">Network Profile</h5>
+                            <select style="width: 200px; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                                <option>Public Network</option>
+                                <option selected>Private Network</option>
+                                <option>Domain Network</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label style="display: flex; align-items: center; margin-bottom: 10px; cursor: pointer;">
+                                <input type="checkbox" checked style="margin-right: 8px; transform: scale(1.2);">
+                                <span>Enable network discovery</span>
+                            </label>
+                            <label style="display: flex; align-items: center; cursor: pointer;">
+                                <input type="checkbox" style="margin-right: 8px; transform: scale(1.2);">
+                                <span>Enable file and printer sharing</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Data Usage -->
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 25px;">
+                        <h4 style="margin-bottom: 15px;">📊 Data Usage</h4>
+                        <div style="margin-bottom: 15px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                                <span style="font-size: 14px;">This Month</span>
+                                <span style="font-size: 14px; font-weight: bold;">2.4 GB / 10 GB</span>
+                            </div>
+                            <div style="background: #e9ecef; height: 8px; border-radius: 4px; overflow: hidden;">
+                                <div style="background: #E95420; height: 100%; width: 24%; transition: width 0.3s ease;"></div>
+                            </div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button onclick="viewDataUsageDetails()" style="background: #007bff; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">📈 View Details</button>
+                            <button onclick="resetDataUsage()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">🔄 Reset Counter</button>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px;">
+                        <button onclick="applyNetworkSettings()" style="background: #E95420; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold;">Apply Changes</button>
+                        <button onclick="resetNetworkSettings()" style="background: #6c757d; color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer;">Reset to Default</button>
+                        <button onclick="openNetworkTroubleshooter()" style="background: #ffc107; color: #333; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: bold;">🔧 Troubleshoot</button>
+                    </div>
+                </div>
+            `
+        };
+
+        // Initialize Settings System
+        function initializeSettings() {
+            // Load default display settings
+            loadSettingsCategory('display');
+
+            // Add click handlers for settings categories
+            document.addEventListener('click', function(e) {
+                const category = e.target.closest('.settings-category');
+                if (category) {
+                    const categoryName = category.dataset.category;
+                    loadSettingsCategory(categoryName);
+
+                    // Update active state
+                    document.querySelectorAll('.settings-category').forEach(cat => {
+                        cat.classList.remove('active');
+                        cat.style.background = '';
+                        cat.style.color = '';
+                    });
+                    category.classList.add('active');
+                    category.style.background = '#E95420';
+                    category.style.color = 'white';
+                }
+            });
+        }
+
+        function loadSettingsCategory(categoryName) {
+            const contentArea = document.getElementById('settings-content');
+            if (!contentArea) return;
+
+            if (settingsTemplates[categoryName]) {
+                contentArea.innerHTML = settingsTemplates[categoryName];
+                initializeCategoryHandlers(categoryName);
+            } else {
+                contentArea.innerHTML = generateGenericSettings(categoryName);
+            }
+        }
+
+        function initializeCategoryHandlers(categoryName) {
+            if (categoryName === 'display') {
+                // Brightness slider
+                const brightnessSlider = document.getElementById('brightness-slider');
+                const brightnessValue = document.getElementById('brightness-value');
+                if (brightnessSlider && brightnessValue) {
+                    brightnessSlider.addEventListener('input', function() {
+                        brightnessValue.textContent = this.value + '%';
+                        settingsData.display.brightness = parseInt(this.value);
+                    });
+                }
+
+                // Scale buttons
+                document.querySelectorAll('.scale-btn').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        document.querySelectorAll('.scale-btn').forEach(b => {
+                            b.classList.remove('active');
+                            b.style.background = 'white';
+                            b.style.color = 'black';
+                            b.style.borderColor = '#ddd';
+                        });
+                        this.classList.add('active');
+                        this.style.background = '#E95420';
+                        this.style.color = 'white';
+                        this.style.borderColor = '#E95420';
+                        settingsData.display.scaling = parseInt(this.dataset.scale);
+                    });
+                });
+            } else if (categoryName === 'sound') {
+                // Master volume slider
+                const volumeSlider = document.getElementById('master-volume');
+                const volumeValue = document.getElementById('volume-value');
+                if (volumeSlider && volumeValue) {
+                    volumeSlider.addEventListener('input', function() {
+                        volumeValue.textContent = this.value + '%';
+                        settingsData.sound.masterVolume = parseInt(this.value);
+                    });
+                }
+            } else if (categoryName === 'network') {
+                // WiFi toggle
+                const wifiToggle = document.getElementById('wifi-enabled');
+                if (wifiToggle) {
+                    wifiToggle.addEventListener('change', function() {
+                        const networksDiv = document.getElementById('wifi-networks');
+                        if (this.checked) {
+                            networksDiv.style.opacity = '1';
+                            networksDiv.style.pointerEvents = 'auto';
+                            settingsData.network.wifiEnabled = true;
+                            showNotification('WiFi enabled', 'success');
+                        } else {
+                            networksDiv.style.opacity = '0.5';
+                            networksDiv.style.pointerEvents = 'none';
+                            settingsData.network.wifiEnabled = false;
+                            showNotification('WiFi disabled', 'info');
+                        }
+                    });
+                }
+
+                // Proxy toggle
+                const proxyToggle = document.getElementById('proxy-enabled');
+                const proxySettings = document.getElementById('proxy-settings');
+                if (proxyToggle && proxySettings) {
+                    proxyToggle.addEventListener('change', function() {
+                        if (this.checked) {
+                            proxySettings.style.display = 'grid';
+                            settingsData.network.proxyEnabled = true;
+                        } else {
+                            proxySettings.style.display = 'none';
+                            settingsData.network.proxyEnabled = false;
+                        }
+                    });
+                }
+            }
+        }
+
+        function generateGenericSettings(categoryName) {
+            const categoryInfo = {
+                network: { icon: '🌐', title: 'Network & Internet Settings', desc: 'Configure network connections and internet settings' },
+                power: { icon: '⚡', title: 'Power & Battery Settings', desc: 'Manage power plans and battery options' },
+                security: { icon: '🔒', title: 'Security & Firewall Settings', desc: 'Configure security and firewall settings' },
+                privacy: { icon: '🛡️', title: 'Privacy & Data Settings', desc: 'Control privacy and data collection settings' },
+                users: { icon: '👤', title: 'Users & Accounts Settings', desc: 'Manage user accounts and permissions' },
+                appearance: { icon: '🎨', title: 'Appearance & Themes Settings', desc: 'Customize the look and feel of Kronos OS' },
+                desktop: { icon: '🏠', title: 'Desktop & Wallpaper Settings', desc: 'Configure desktop appearance and wallpaper' },
+                accessibility: { icon: '♿', title: 'Accessibility Settings', desc: 'Configure accessibility features and options' },
+                about: { icon: 'ℹ️', title: 'About Kronos OS', desc: 'System information and version details' },
+                updates: { icon: '🔄', title: 'System Updates', desc: 'Check for and install system updates' }
+            };
+
+            const info = categoryInfo[categoryName] || { icon: '⚙️', title: 'Settings', desc: 'Configure system settings' };
+
+            return `
+                <div style="max-width: 600px;">
+                    <h2 style="margin-bottom: 25px; color: #333; display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 28px;">${info.icon}</span>
+                        ${info.title}
+                    </h2>
+
+                    <div style="background: #f8f9fa; padding: 30px; border-radius: 8px; text-align: center; margin-bottom: 25px;">
+                        <div style="font-size: 48px; margin-bottom: 15px;">${info.icon}</div>
+                        <h3 style="margin-bottom: 10px; color: #333;">${info.title}</h3>
+                        <p style="color: #666; margin-bottom: 20px;">${info.desc}</p>
+                        <div style="background: #E95420; color: white; padding: 10px 20px; border-radius: 6px; display: inline-block; font-weight: bold;">
+                            Coming Soon in Kronos OS v2.1
+                        </div>
+                    </div>
+
+                    ${categoryName === 'about' ? generateAboutContent() : ''}
+                    ${categoryName === 'updates' ? generateUpdatesContent() : ''}
+                </div>
+            `;
+        }
+
+        function generateAboutContent() {
+            return `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 15px;">System Information</h4>
+                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; font-size: 14px;">
+                        <div style="font-weight: bold;">Operating System:</div>
+                        <div>Kronos OS 2.0.1 (64-bit)</div>
+                        <div style="font-weight: bold;">Version:</div>
+                        <div>Build 20240628.1</div>
+                        <div style="font-weight: bold;">Processor:</div>
+                        <div>Intel Core i7-9700K @ 3.60GHz</div>
+                        <div style="font-weight: bold;">Memory:</div>
+                        <div>16.0 GB RAM</div>
+                        <div style="font-weight: bold;">Storage:</div>
+                        <div>512 GB SSD</div>
+                        <div style="font-weight: bold;">Graphics:</div>
+                        <div>NVIDIA GeForce RTX 3070</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateUpdatesContent() {
+            return `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4 style="margin-bottom: 15px;">Update Status</h4>
+                    <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <div style="width: 12px; height: 12px; background: #28a745; border-radius: 50%;"></div>
+                        <span style="font-weight: bold; color: #28a745;">System is up to date</span>
+                    </div>
+                    <p style="color: #666; margin-bottom: 15px;">Last checked: Today at 2:30 PM</p>
+                    <button onclick="checkForUpdates()" style="background: #E95420; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">Check for Updates</button>
+                </div>
+            `;
+        }
+
+        // Settings Action Functions
+        function applyDisplaySettings() {
+            showNotification('Display settings applied successfully!', 'success');
+        }
+
+        function resetDisplaySettings() {
+            document.getElementById('brightness-slider').value = 80;
+            document.getElementById('brightness-value').textContent = '80%';
+            document.getElementById('night-mode').checked = true;
+            document.getElementById('auto-hide-taskbar').checked = false;
+            showNotification('Display settings reset to default', 'info');
+        }
+
+        function applySoundSettings() {
+            showNotification('Sound settings applied successfully!', 'success');
+        }
+
+        function testSound() {
+            showNotification('🔊 Test sound played', 'info');
+        }
+
+        function checkForUpdates() {
+            showNotification('Checking for updates...', 'info');
+            setTimeout(() => {
+                showNotification('No updates available. System is up to date.', 'success');
+            }, 2000);
+        }
+
+        // Network Settings Functions
+        function connectToNetwork(networkName) {
+            showNotification(`Connecting to ${networkName}...`, 'info');
+
+            // Simulate connection process
+            setTimeout(() => {
+                // Update UI to show connected state
+                document.querySelectorAll('.network-item').forEach(item => {
+                    item.classList.remove('connected');
+                    item.style.borderColor = '#ddd';
+                    const statusDiv = item.querySelector('div div:last-child');
+                    if (statusDiv) {
+                        statusDiv.textContent = statusDiv.textContent.replace('Connected • ', '');
+                        statusDiv.style.color = '#666';
+                    }
+                });
+
+                // Find and update the clicked network
+                const networkItems = document.querySelectorAll('.network-item');
+                networkItems.forEach(item => {
+                    const nameDiv = item.querySelector('div div div');
+                    if (nameDiv && nameDiv.textContent === networkName) {
+                        item.classList.add('connected');
+                        item.style.borderColor = '#28a745';
+                        const statusDiv = item.querySelector('div div:last-child');
+                        if (statusDiv) {
+                            statusDiv.textContent = 'Connected • ' + statusDiv.textContent;
+                            statusDiv.style.color = '#28a745';
+                        }
+                        const button = item.querySelector('button');
+                        if (button) {
+                            button.textContent = 'Disconnect';
+                            button.style.background = '#dc3545';
+                            button.onclick = () => disconnectWiFi();
+                        }
+                    }
+                });
+
+                settingsData.network.currentNetwork = networkName;
+                showNotification(`Connected to ${networkName}`, 'success');
+            }, 1500);
+        }
+
+        function disconnectWiFi() {
+            showNotification('Disconnecting from WiFi...', 'info');
+
+            setTimeout(() => {
+                // Update connection status
+                const connectedItem = document.querySelector('.network-item.connected');
+                if (connectedItem) {
+                    connectedItem.classList.remove('connected');
+                    connectedItem.style.borderColor = '#ddd';
+                    const statusDiv = connectedItem.querySelector('div div:last-child');
+                    if (statusDiv) {
+                        statusDiv.textContent = statusDiv.textContent.replace('Connected • ', '');
+                        statusDiv.style.color = '#666';
+                    }
+                    const button = connectedItem.querySelector('button');
+                    if (button) {
+                        button.textContent = 'Connect';
+                        button.style.background = '#E95420';
+                        const networkName = connectedItem.querySelector('div div div').textContent;
+                        button.onclick = () => connectToNetwork(networkName);
+                    }
+                }
+
+                settingsData.network.currentNetwork = null;
+                showNotification('Disconnected from WiFi', 'info');
+            }, 1000);
+        }
+
+        function scanForNetworks() {
+            showNotification('Scanning for networks...', 'info');
+
+            setTimeout(() => {
+                // Simulate finding new networks
+                const networksContainer = document.getElementById('wifi-networks');
+                const newNetwork = document.createElement('div');
+                newNetwork.className = 'network-item';
+                newNetwork.style.cssText = 'display: flex; justify-content: space-between; align-items: center; padding: 12px; background: white; border: 1px solid #ddd; border-radius: 6px; margin-bottom: 8px; cursor: pointer;';
+                newNetwork.onclick = () => connectToNetwork('New-Network-' + Math.floor(Math.random() * 100));
+
+                newNetwork.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 18px;">📶</span>
+                        <div>
+                            <div style="font-weight: bold;">New-Network-${Math.floor(Math.random() * 100)}</div>
+                            <div style="font-size: 12px; color: #666;">Secured • WPA2</div>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span style="font-size: 12px; color: #666;">Signal: Good</span>
+                        <button style="background: #E95420; color: white; border: none; padding: 4px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">Connect</button>
+                    </div>
+                `;
+
+                networksContainer.appendChild(newNetwork);
+                showNotification('Network scan completed. Found new networks.', 'success');
+            }, 2000);
+        }
+
+        function addHiddenNetwork() {
+            const networkName = prompt('Enter hidden network name (SSID):');
+            if (networkName) {
+                const password = prompt('Enter network password:');
+                if (password) {
+                    showNotification(`Adding hidden network "${networkName}"...`, 'info');
+                    setTimeout(() => {
+                        showNotification(`Hidden network "${networkName}" added successfully`, 'success');
+                    }, 1500);
+                }
+            }
+        }
+
+        function runNetworkDiagnostics() {
+            showNotification('Running network diagnostics...', 'info');
+
+            setTimeout(() => {
+                const diagnostics = [
+                    'Testing internet connectivity... ✓',
+                    'Checking DNS resolution... ✓',
+                    'Verifying network adapter... ✓',
+                    'Testing gateway connection... ✓'
+                ];
+
+                let index = 0;
+                const interval = setInterval(() => {
+                    if (index < diagnostics.length) {
+                        showNotification(diagnostics[index], 'info');
+                        index++;
+                    } else {
+                        clearInterval(interval);
+                        showNotification('Network diagnostics completed. All tests passed.', 'success');
+                    }
+                }, 800);
+            }, 500);
+        }
+
+        function refreshNetworkStatus() {
+            showNotification('Refreshing network status...', 'info');
+            setTimeout(() => {
+                showNotification('Network status refreshed', 'success');
+            }, 1000);
+        }
+
+        function viewDataUsageDetails() {
+            showNotification('Opening data usage details...', 'info');
+            // In a real implementation, this would open a detailed data usage window
+        }
+
+        function resetDataUsage() {
+            if (confirm('Are you sure you want to reset the data usage counter?')) {
+                showNotification('Data usage counter reset', 'success');
+                // Update the progress bar
+                const progressBar = document.querySelector('[style*="width: 24%"]');
+                if (progressBar) {
+                    progressBar.style.width = '0%';
+                }
+            }
+        }
+
+        function applyNetworkSettings() {
+            showNotification('Network settings applied successfully!', 'success');
+        }
+
+        function resetNetworkSettings() {
+            if (confirm('Are you sure you want to reset all network settings to default?')) {
+                showNotification('Network settings reset to default', 'info');
+                // Reset form values
+                document.getElementById('wifi-enabled').checked = true;
+                document.getElementById('proxy-enabled').checked = false;
+                document.getElementById('proxy-settings').style.display = 'none';
+            }
+        }
+
+        function openNetworkTroubleshooter() {
+            showNotification('Opening Network Troubleshooter...', 'info');
+            setTimeout(() => {
+                showNotification('Network Troubleshooter: No issues detected', 'success');
+            }, 2000);
+        }
+
+        // Real-Time OS Data for Arduino/Mini Computer Education
+        let systemStartTime = Date.now();
+        let realtimeDataInterval;
+        let systemMetricsInterval;
+
+        // Arduino/IoT sensor simulation data
+        const sensorData = {
+            temperature: 24.5,
+            humidity: 65,
+            pressure: 1013,
+            light: 450,
+            airQuality: 'Good',
+            uvIndex: 3.2,
+            cpuTemp: 42,
+            cpuUsage: 45,
+            memoryUsage: 62,
+            storageUsage: 35,
+            gpioActive: 8,
+            pwmChannels: 4,
+            adcChannels: 6
+        };
+
+        // Terminal command system for educational purposes
+        const terminalCommands = {
+            help: () => `Available Commands:
+├── System: status, ps, top, mem, cpu, uptime, reboot
+├── Hardware: sensors, gpio, i2c, spi, uart, pwm, adc
+├── Network: ping, ifconfig, netstat, wifi
+├── Files: ls, cat, mkdir, rm, cp, mv
+├── Arduino: sketch, upload, serial, monitor
+├── Education: tutorial, examples, docs, quiz
+└── Advanced: debug, trace, profile, benchmark`,
+
+            status: () => `Kronos OS Real-Time Status:
+System: ONLINE | Uptime: ${getUptime()}
+CPU: ${sensorData.cpuUsage}% | Memory: ${sensorData.memoryUsage}%
+Temperature: ${sensorData.cpuTemp}°C | Load: 0.45, 0.52, 0.48
+Processes: 127 total, 3 running, 124 sleeping
+Network: Connected | IP: 192.168.1.100`,
+
+            sensors: () => `Environmental Sensors:
+🌡️  Temperature: ${sensorData.temperature}°C
+💧 Humidity: ${sensorData.humidity}%
+🌪️  Pressure: ${sensorData.pressure} hPa
+☀️  Light: ${sensorData.light} lux
+🌬️  Air Quality: ${sensorData.airQuality}
+☢️  UV Index: ${sensorData.uvIndex}`,
+
+            gpio: () => `GPIO Pin Status:
+Pin 2: OUTPUT HIGH (LED)     Pin 3: INPUT PULLUP (Button)
+Pin 4: PWM 50% (Motor)       Pin 5: OUTPUT LOW (Relay)
+Pin 6: ANALOG READ (Sensor)  Pin 7: I2C SDA (Display)
+Pin 8: I2C SCL (Display)     Pin 9: SPI MOSI (SD Card)
+Active: ${sensorData.gpioActive}/40 pins`,
+
+            i2c: () => `I2C Bus Status:
+Bus 0: ACTIVE | Frequency: 100kHz
+Devices Found:
+  0x3C: OLED Display (SSD1306)
+  0x48: Temperature Sensor (LM75)
+  0x68: Real-Time Clock (DS3231)
+  0x76: Pressure Sensor (BMP280)`,
+
+            spi: () => `SPI Bus Status:
+SPI0: ACTIVE | Mode: 0 | Speed: 8MHz
+Devices:
+  CS0: SD Card Module (Ready)
+  CS1: LoRa Module (SX1278)
+  CS2: TFT Display (ILI9341)`,
+
+            uart: () => `UART Status:
+UART0: 115200 bps, 8N1 (Console)
+UART1: 9600 bps, 8N1 (GPS Module)
+UART2: 38400 bps, 8N1 (WiFi Module)
+Buffer: TX: 0/1024, RX: 0/1024`,
+
+            pwm: () => `PWM Channels Status:
+CH0: 50% duty, 1kHz (Motor Speed)
+CH1: 25% duty, 2kHz (LED Brightness)
+CH2: 75% duty, 500Hz (Servo Position)
+CH3: 0% duty, 1kHz (Buzzer)
+Active: ${sensorData.pwmChannels}/16 channels`,
+
+            adc: () => `ADC Channels Status:
+CH0: 2.45V (Battery Voltage)
+CH1: 1.23V (Light Sensor)
+CH2: 0.85V (Temperature)
+CH3: 3.15V (Potentiometer)
+CH4: 0.12V (Current Sensor)
+CH5: 2.98V (Pressure Sensor)
+Resolution: 12-bit | Reference: 3.3V`,
+
+            temp: () => `Temperature Monitoring:
+CPU: ${sensorData.cpuTemp}°C (Normal)
+Environment: ${sensorData.temperature}°C
+Sensor 1: 23.8°C | Sensor 2: 25.1°C
+Warning Threshold: 85°C | Critical: 95°C`,
+
+            voltage: () => `Voltage Monitoring:
+System: 5.0V ±0.1V (Stable)
+Battery: 3.7V (85% charged)
+3.3V Rail: 3.28V (Good)
+Analog Ref: 3.30V (Stable)`,
+
+            ps: () => `Process List:
+PID  NAME           CPU%  MEM%  STATUS
+1    init           0.1   0.5   Running
+2    kthreadd       0.0   0.0   Sleeping
+127  kronos-shell   2.1   1.2   Running
+128  sensor-daemon  1.5   0.8   Running
+129  gpio-manager   0.3   0.4   Sleeping`,
+
+            top: () => `Real-Time Process Monitor:
+Tasks: 127 total, 3 running, 124 sleeping
+CPU: ${sensorData.cpuUsage}% user, 5% system, 50% idle
+Memory: ${sensorData.memoryUsage}% used, 38% available
+Load average: 0.45, 0.52, 0.48`,
+
+            mem: () => `Memory Information:
+Total: 16384 MB | Used: ${Math.round(16384 * sensorData.memoryUsage / 100)} MB
+Available: ${Math.round(16384 * (100 - sensorData.memoryUsage) / 100)} MB
+Buffers: 512 MB | Cached: 2048 MB
+Swap: 4096 MB (0% used)`,
+
+            cpu: () => `CPU Information:
+Model: ARM Cortex-A72 @ 1.5GHz
+Cores: 4 | Threads: 4
+Cache: L1: 32KB, L2: 1MB
+Usage: ${sensorData.cpuUsage}% | Temperature: ${sensorData.cpuTemp}°C
+Governor: performance | Frequency: 1500MHz`,
+
+            uptime: () => `System Uptime: ${getUptime()}
+Load Average: 0.45, 0.52, 0.48
+Users: 1 | Processes: 127`,
+
+            tutorial: () => `Kronos OS Educational Tutorials:
+1. GPIO Control Basics
+2. Sensor Reading & Processing
+3. I2C Communication
+4. SPI Protocol Implementation
+5. PWM Signal Generation
+6. Real-Time Task Scheduling
+7. Interrupt Handling
+8. Memory Management
+Type 'tutorial <number>' for specific lesson`,
+
+            examples: () => `Code Examples Available:
+├── Blink LED (GPIO)
+├── Read Temperature (I2C)
+├── Control Servo (PWM)
+├── SD Card Logging (SPI)
+├── WiFi Communication
+├── Bluetooth Setup
+├── Real-Time Clock
+└── Data Acquisition System`,
+
+            clear: () => {
+                document.getElementById('terminal-output').innerHTML = '';
+                return '';
+            }
+        };
+
+        // Handle terminal input
+        function handleTerminalInput(event) {
+            if (event.key === 'Enter') {
+                const input = event.target;
+                const command = input.value.trim().toLowerCase();
+                const output = document.getElementById('terminal-output');
+
+                // Add command to output
+                const commandLine = document.createElement('div');
+                commandLine.style.color = '#ffff00';
+                commandLine.innerHTML = `root@kronos-edu:~# ${command}`;
+                output.appendChild(commandLine);
+
+                // Execute command
+                const result = document.createElement('div');
+                result.style.color = '#00ff41';
+                result.style.marginBottom = '10px';
+                result.style.whiteSpace = 'pre-line';
+
+                if (terminalCommands[command]) {
+                    result.textContent = terminalCommands[command]();
+                } else if (command === '') {
+                    result.textContent = '';
+                } else {
+                    result.textContent = `Command not found: ${command}\nType 'help' for available commands.`;
+                    result.style.color = '#ff6b6b';
+                }
+
+                output.appendChild(result);
+
+                // Clear input and scroll to bottom
+                input.value = '';
+                output.scrollTop = output.scrollHeight;
+            }
+        }
+
+        // Get system uptime
+        function getUptime() {
+            const uptime = Date.now() - systemStartTime;
+            const hours = Math.floor(uptime / 3600000);
+            const minutes = Math.floor((uptime % 3600000) / 60000);
+            const seconds = Math.floor((uptime % 60000) / 1000);
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Update real-time data stream in terminal
+        function updateRealtimeData() {
+            const dataDiv = document.getElementById('realtime-data');
+            if (!dataDiv) return;
+
+            // Simulate sensor fluctuations
+            sensorData.temperature += (Math.random() - 0.5) * 0.2;
+            sensorData.humidity += (Math.random() - 0.5) * 2;
+            sensorData.pressure += (Math.random() - 0.5) * 0.5;
+            sensorData.light += (Math.random() - 0.5) * 20;
+            sensorData.cpuTemp += (Math.random() - 0.5) * 1;
+            sensorData.cpuUsage += (Math.random() - 0.5) * 5;
+            sensorData.memoryUsage += (Math.random() - 0.5) * 2;
+
+            // Keep values in realistic ranges
+            sensorData.temperature = Math.max(20, Math.min(30, sensorData.temperature));
+            sensorData.humidity = Math.max(40, Math.min(80, sensorData.humidity));
+            sensorData.cpuUsage = Math.max(20, Math.min(80, sensorData.cpuUsage));
+            sensorData.memoryUsage = Math.max(40, Math.min(85, sensorData.memoryUsage));
+
+            const timestamp = new Date().toLocaleTimeString();
+            const dataLine = `[${timestamp}] CPU:${sensorData.cpuUsage.toFixed(1)}% MEM:${sensorData.memoryUsage.toFixed(1)}% TEMP:${sensorData.temperature.toFixed(1)}°C HUM:${sensorData.humidity.toFixed(0)}%`;
+
+            // Add new data line
+            const newLine = document.createElement('div');
+            newLine.textContent = dataLine;
+            newLine.style.color = '#74c0fc';
+            dataDiv.appendChild(newLine);
+
+            // Keep only last 10 lines
+            while (dataDiv.children.length > 10) {
+                dataDiv.removeChild(dataDiv.firstChild);
+            }
+        }
+
+        // Update system metrics in monitor
+        function updateSystemMetrics() {
+            // Update uptime
+            const uptimeElement = document.getElementById('uptime');
+            if (uptimeElement) {
+                uptimeElement.textContent = getUptime();
+            }
+
+            // Update available memory
+            const memElement = document.getElementById('available-memory');
+            if (memElement) {
+                const available = (16 * (100 - sensorData.memoryUsage) / 100).toFixed(1);
+                memElement.textContent = `${available}GB`;
+            }
+
+            // Update monitor window metrics
+            updateElement('cpu-percent', sensorData.cpuUsage.toFixed(1));
+            updateElement('cpu-temp', `${sensorData.cpuTemp.toFixed(1)}°C`);
+            updateElement('memory-used', (16 * sensorData.memoryUsage / 100).toFixed(1));
+            updateElement('memory-available', (16 * (100 - sensorData.memoryUsage) / 100).toFixed(1));
+            updateElement('env-temp', `${sensorData.temperature.toFixed(1)}°C`);
+            updateElement('env-humidity', `${sensorData.humidity.toFixed(0)}%`);
+            updateElement('env-pressure', `${sensorData.pressure.toFixed(0)} hPa`);
+            updateElement('env-light', `${sensorData.light.toFixed(0)} lux`);
+
+            // Update progress bars
+            updateProgressBar('cpu-bar', sensorData.cpuUsage);
+            updateProgressBar('memory-bar', sensorData.memoryUsage);
+            updateProgressBar('storage-bar', sensorData.storageUsage);
+        }
+
+        function updateElement(id, value) {
+            const element = document.getElementById(id);
+            if (element) {
+                element.textContent = value;
+            }
+        }
+
+        function updateProgressBar(id, percentage) {
+            const bar = document.getElementById(id);
+            if (bar) {
+                bar.style.width = `${percentage}%`;
+            }
+        }
+
+        // App Store Data and Functions
+        const appStoreData = {
+            apps: [
+                {
+                    id: 'text-editor',
+                    name: 'Advanced Text Editor',
+                    icon: '📝',
+                    category: 'productivity',
+                    description: 'Professional text editor with syntax highlighting and multiple file support.',
+                    version: '2.1.0',
+                    size: '15 MB',
+                    rating: 4.8,
+                    downloads: 12500,
+                    developer: 'Kronos Team',
+                    screenshots: ['editor1.jpg', 'editor2.jpg'],
+                    features: ['Syntax Highlighting', 'Multi-tab Support', 'Plugin System', 'Dark/Light Theme']
+                },
+                {
+                    id: 'arduino-ide',
+                    name: 'Arduino IDE Pro',
+                    icon: '🔧',
+                    category: 'arduino',
+                    description: 'Enhanced Arduino development environment with advanced debugging tools.',
+                    version: '3.0.2',
+                    size: '45 MB',
+                    rating: 4.9,
+                    downloads: 8900,
+                    developer: 'Arduino Foundation',
+                    screenshots: ['arduino1.jpg', 'arduino2.jpg'],
+                    features: ['Code Completion', 'Serial Plotter', 'Library Manager', 'Board Manager']
+                },
+                {
+                    id: 'math-solver',
+                    name: 'Mathematical Solver',
+                    icon: '🧮',
+                    category: 'education',
+                    description: 'Advanced calculator with equation solving and graphing capabilities.',
+                    version: '1.5.3',
+                    size: '8 MB',
+                    rating: 4.6,
+                    downloads: 15600,
+                    developer: 'EduSoft',
+                    screenshots: ['math1.jpg', 'math2.jpg'],
+                    features: ['Equation Solver', '2D/3D Graphing', 'Unit Converter', 'Scientific Functions']
+                },
+                {
+                    id: 'pixel-art',
+                    name: 'Pixel Art Studio',
+                    icon: '🎨',
+                    category: 'multimedia',
+                    description: 'Create stunning pixel art and sprites for games and applications.',
+                    version: '2.3.1',
+                    size: '22 MB',
+                    rating: 4.7,
+                    downloads: 7800,
+                    developer: 'Creative Labs',
+                    screenshots: ['pixel1.jpg', 'pixel2.jpg'],
+                    features: ['Layer Support', 'Animation Tools', 'Color Palettes', 'Export Options']
+                },
+                {
+                    id: 'network-analyzer',
+                    name: 'Network Analyzer',
+                    icon: '🌐',
+                    category: 'utilities',
+                    description: 'Monitor and analyze network traffic with detailed statistics.',
+                    version: '1.8.0',
+                    size: '12 MB',
+                    rating: 4.5,
+                    downloads: 5400,
+                    developer: 'NetTools Inc',
+                    screenshots: ['network1.jpg', 'network2.jpg'],
+                    features: ['Traffic Monitoring', 'Protocol Analysis', 'Security Scanning', 'Performance Metrics']
+                },
+                {
+                    id: 'retro-games',
+                    name: 'Retro Game Collection',
+                    icon: '🕹️',
+                    category: 'games',
+                    description: 'Classic arcade games collection with modern enhancements.',
+                    version: '4.2.0',
+                    size: '35 MB',
+                    rating: 4.9,
+                    downloads: 23400,
+                    developer: 'Retro Studios',
+                    screenshots: ['games1.jpg', 'games2.jpg'],
+                    features: ['10 Classic Games', 'High Score System', 'Customizable Controls', 'Save States']
+                },
+                {
+                    id: 'sensor-monitor',
+                    name: 'Sensor Data Monitor',
+                    icon: '📡',
+                    category: 'arduino',
+                    description: 'Real-time monitoring and logging of sensor data from Arduino devices.',
+                    version: '2.0.5',
+                    size: '18 MB',
+                    rating: 4.8,
+                    downloads: 6700,
+                    developer: 'IoT Solutions',
+                    screenshots: ['sensor1.jpg', 'sensor2.jpg'],
+                    features: ['Real-time Graphs', 'Data Logging', 'Alert System', 'Multiple Sensors']
+                },
+                {
+                    id: 'code-formatter',
+                    name: 'Code Formatter Pro',
+                    icon: '⚡',
+                    category: 'development',
+                    description: 'Format and beautify code in multiple programming languages.',
+                    version: '1.3.2',
+                    size: '6 MB',
+                    rating: 4.4,
+                    downloads: 9200,
+                    developer: 'DevTools',
+                    screenshots: ['formatter1.jpg', 'formatter2.jpg'],
+                    features: ['Multi-language Support', 'Custom Rules', 'Batch Processing', 'Integration APIs']
+                }
+            ],
+            installedApps: new Set(['terminal', 'files', 'calculator', 'games', 'settings', 'monitor', 'music', 'video']),
+            categories: {
+                'all': 'All Applications',
+                'productivity': 'Productivity',
+                'development': 'Development',
+                'education': 'Education',
+                'games': 'Games',
+                'multimedia': 'Multimedia',
+                'utilities': 'Utilities',
+                'arduino': 'Arduino/IoT'
+            }
+        };
+
+        // App Store Functions
+        function populateAppsGrid(apps = appStoreData.apps) {
+            const grid = document.getElementById('apps-grid');
+            if (!grid) return;
+
+            grid.innerHTML = '';
+
+            apps.forEach(app => {
+                const isInstalled = appStoreData.installedApps.has(app.id);
+                const appCard = document.createElement('div');
+                appCard.className = 'app-card';
+                appCard.style.cssText = `
+                    background: white;
+                    border-radius: 12px;
+                    padding: 15px;
+                    border: 1px solid #e0e0e0;
+                    cursor: pointer;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                `;
+
+                appCard.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                        <div style="font-size: 36px;">${app.icon}</div>
+                        <div style="flex: 1;">
+                            <h4 style="margin: 0; font-size: 16px; color: #333;">${app.name}</h4>
+                            <div style="font-size: 12px; color: #666; margin-top: 2px;">${app.developer}</div>
+                            <div style="display: flex; align-items: center; gap: 8px; margin-top: 4px;">
+                                <div style="display: flex; color: #ffc107;">
+                                    ${'★'.repeat(Math.floor(app.rating))}${'☆'.repeat(5 - Math.floor(app.rating))}
+                                </div>
+                                <span style="font-size: 12px; color: #666;">${app.rating}</span>
+                                <span style="font-size: 12px; color: #999;">• ${app.downloads.toLocaleString()} downloads</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="font-size: 13px; color: #666; margin-bottom: 12px; line-height: 1.4;">
+                        ${app.description}
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div style="display: flex; gap: 8px; align-items: center;">
+                            <span style="background: #f0f0f0; color: #666; padding: 2px 6px; border-radius: 4px; font-size: 11px;">
+                                ${appStoreData.categories[app.category]}
+                            </span>
+                            <span style="font-size: 11px; color: #999;">${app.size}</span>
+                        </div>
+                        <button onclick="handleAppAction('${app.id}'); event.stopPropagation();"
+                                style="background: ${isInstalled ? '#6c757d' : '#28a745'};
+                                       color: white; border: none; padding: 6px 12px;
+                                       border-radius: 6px; cursor: pointer; font-size: 12px;">
+                            ${isInstalled ? 'Installed' : 'Install'}
+                        </button>
+                    </div>
+                `;
+
+                appCard.addEventListener('click', () => showAppDetails(app.id));
+                appCard.addEventListener('mouseenter', () => {
+                    appCard.style.transform = 'translateY(-2px)';
+                    appCard.style.boxShadow = '0 4px 16px rgba(0,0,0,0.15)';
+                });
+                appCard.addEventListener('mouseleave', () => {
+                    appCard.style.transform = 'translateY(0)';
+                    appCard.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                });
+
+                grid.appendChild(appCard);
+            });
+        }
+
+        function handleAppAction(appId) {
+            if (appStoreData.installedApps.has(appId)) {
+                uninstallApp(appId);
+            } else {
+                installApp(appId);
+            }
+        }
+
+        function installApp(appId) {
+            const app = appStoreData.apps.find(a => a.id === appId);
+            if (!app) return;
+
+            showNotification(`Installing ${app.name}...`, 'info');
+
+            // Simulate installation process
+            setTimeout(() => {
+                appStoreData.installedApps.add(appId);
+                populateAppsGrid(getCurrentFilteredApps());
+                showNotification(`${app.name} installed successfully!`, 'success');
+
+                // Add to desktop (simulate)
+                setTimeout(() => {
+                    showNotification(`${app.name} added to desktop`, 'info');
+                }, 1000);
+            }, 2000);
+        }
+
+        function uninstallApp(appId) {
+            const app = appStoreData.apps.find(a => a.id === appId);
+            if (!app) return;
+
+            if (confirm(`Are you sure you want to uninstall ${app.name}?`)) {
+                showNotification(`Uninstalling ${app.name}...`, 'info');
+
+                setTimeout(() => {
+                    appStoreData.installedApps.delete(appId);
+                    populateAppsGrid(getCurrentFilteredApps());
+                    showNotification(`${app.name} uninstalled successfully!`, 'success');
+                }, 1500);
+            }
+        }
+
+        function showAppDetails(appId) {
+            const app = appStoreData.apps.find(a => a.id === appId);
+            if (!app) return;
+
+            const isInstalled = appStoreData.installedApps.has(appId);
+
+            // Create modal for app details
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.7); z-index: 10000; display: flex;
+                align-items: center; justify-content: center;
+            `;
+
+            modal.innerHTML = `
+                <div style="background: white; border-radius: 12px; padding: 30px; max-width: 600px; width: 90%; max-height: 80%; overflow-y: auto;">
+                    <div style="display: flex; align-items: center; gap: 20px; margin-bottom: 20px;">
+                        <div style="font-size: 64px;">${app.icon}</div>
+                        <div>
+                            <h2 style="margin: 0; color: #333;">${app.name}</h2>
+                            <div style="color: #666; margin: 5px 0;">by ${app.developer}</div>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="display: flex; color: #ffc107;">
+                                    ${'★'.repeat(Math.floor(app.rating))}${'☆'.repeat(5 - Math.floor(app.rating))}
+                                </div>
+                                <span>${app.rating}</span>
+                                <span style="color: #999;">• ${app.downloads.toLocaleString()} downloads</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4>Description</h4>
+                        <p style="color: #666; line-height: 1.6;">${app.description}</p>
+                    </div>
+
+                    <div style="margin-bottom: 20px;">
+                        <h4>Features</h4>
+                        <ul style="color: #666;">
+                            ${app.features.map(feature => `<li>${feature}</li>`).join('')}
+                        </ul>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                        <div>
+                            <strong>Version:</strong> ${app.version}<br>
+                            <strong>Size:</strong> ${app.size}<br>
+                            <strong>Category:</strong> ${appStoreData.categories[app.category]}
+                        </div>
+                        <div>
+                            <strong>Downloads:</strong> ${app.downloads.toLocaleString()}<br>
+                            <strong>Rating:</strong> ${app.rating}/5<br>
+                            <strong>Developer:</strong> ${app.developer}
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 10px; justify-content: flex-end;">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()"
+                                style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                            Close
+                        </button>
+                        <button onclick="handleAppAction('${app.id}'); this.parentElement.parentElement.parentElement.remove();"
+                                style="background: ${isInstalled ? '#dc3545' : '#28a745'}; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer;">
+                            ${isInstalled ? 'Uninstall' : 'Install'}
+                        </button>
+                    </div>
+                </div>
+            `;
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.remove();
+            });
+
+            document.body.appendChild(modal);
+        }
+
+        function searchApps() {
+            const searchTerm = document.getElementById('app-search').value.toLowerCase();
+            const filteredApps = appStoreData.apps.filter(app =>
+                app.name.toLowerCase().includes(searchTerm) ||
+                app.description.toLowerCase().includes(searchTerm) ||
+                app.developer.toLowerCase().includes(searchTerm)
+            );
+            populateAppsGrid(filteredApps);
+        }
+
+        function filterByCategory() {
+            const category = document.getElementById('category-filter').value;
+            const filteredApps = category === 'all'
+                ? appStoreData.apps
+                : appStoreData.apps.filter(app => app.category === category);
+            populateAppsGrid(filteredApps);
+        }
+
+        function getCurrentFilteredApps() {
+            const searchTerm = document.getElementById('app-search')?.value.toLowerCase() || '';
+            const category = document.getElementById('category-filter')?.value || 'all';
+
+            let filteredApps = appStoreData.apps;
+
+            if (category !== 'all') {
+                filteredApps = filteredApps.filter(app => app.category === category);
+            }
+
+            if (searchTerm) {
+                filteredApps = filteredApps.filter(app =>
+                    app.name.toLowerCase().includes(searchTerm) ||
+                    app.description.toLowerCase().includes(searchTerm) ||
+                    app.developer.toLowerCase().includes(searchTerm)
+                );
+            }
+
+            return filteredApps;
+        }
+
+        function refreshAppStore() {
+            showNotification('Refreshing App Store...', 'info');
+            setTimeout(() => {
+                populateAppsGrid();
+                showNotification('App Store refreshed!', 'success');
+            }, 1000);
+        }
+
+        function showMyApps() {
+            const installedApps = appStoreData.apps.filter(app => appStoreData.installedApps.has(app.id));
+            populateAppsGrid(installedApps);
+            showNotification(`Showing ${installedApps.length} installed applications`, 'info');
+        }
+
+        // File Manager System
+        const fileManagerData = {
+            currentPath: '/home/user',
+            history: ['/home/user'],
+            historyIndex: 0,
+            viewMode: 'grid',
+            fileSystem: {
+                '/home/user': {
+                    type: 'directory',
+                    contents: {
+                        'Desktop': { type: 'directory', size: '4.0 KB', modified: '2024-06-28 14:30' },
+                        'Documents': { type: 'directory', size: '4.0 KB', modified: '2024-06-28 12:15' },
+                        'Downloads': { type: 'directory', size: '4.0 KB', modified: '2024-06-28 16:45' },
+                        'Pictures': { type: 'directory', size: '4.0 KB', modified: '2024-06-27 09:20' },
+                        'Music': { type: 'directory', size: '4.0 KB', modified: '2024-06-26 18:30' },
+                        'Videos': { type: 'directory', size: '4.0 KB', modified: '2024-06-25 21:10' },
+                        'readme.txt': { type: 'file', size: '2.1 KB', modified: '2024-06-28 10:00' },
+                        'system_info.log': { type: 'file', size: '15.7 KB', modified: '2024-06-28 17:22' },
+                        'config.json': { type: 'file', size: '892 B', modified: '2024-06-27 14:55' }
+                    }
+                },
+                '/home/user/Documents': {
+                    type: 'directory',
+                    contents: {
+                        'Projects': { type: 'directory', size: '4.0 KB', modified: '2024-06-28 11:30' },
+                        'Arduino_Code': { type: 'directory', size: '4.0 KB', modified: '2024-06-27 15:45' },
+                        'Notes': { type: 'directory', size: '4.0 KB', modified: '2024-06-26 13:20' },
+                        'report.pdf': { type: 'file', size: '1.2 MB', modified: '2024-06-28 09:15' },
+                        'presentation.pptx': { type: 'file', size: '3.4 MB', modified: '2024-06-27 16:30' },
+                        'todo.txt': { type: 'file', size: '456 B', modified: '2024-06-28 08:45' }
+                    }
+                },
+                '/home/user/Downloads': {
+                    type: 'directory',
+                    contents: {
+                        'arduino-ide-2.3.2.zip': { type: 'file', size: '89.5 MB', modified: '2024-06-28 16:45' },
+                        'sensor_library.zip': { type: 'file', size: '2.3 MB', modified: '2024-06-27 14:20' },
+                        'datasheet.pdf': { type: 'file', size: '1.8 MB', modified: '2024-06-26 11:30' },
+                        'firmware_update.bin': { type: 'file', size: '512 KB', modified: '2024-06-25 19:15' }
+                    }
+                },
+                '/home/user/Pictures': {
+                    type: 'directory',
+                    contents: {
+                        'Screenshots': { type: 'directory', size: '4.0 KB', modified: '2024-06-28 13:45' },
+                        'Circuit_Photos': { type: 'directory', size: '4.0 KB', modified: '2024-06-27 10:20' },
+                        'project_demo.jpg': { type: 'file', size: '2.1 MB', modified: '2024-06-28 15:30' },
+                        'arduino_setup.png': { type: 'file', size: '856 KB', modified: '2024-06-27 12:45' },
+                        'schematic.png': { type: 'file', size: '1.3 MB', modified: '2024-06-26 16:20' }
+                    }
+                },
+                '/usr/bin': {
+                    type: 'directory',
+                    contents: {
+                        'gcc': { type: 'file', size: '1.2 MB', modified: '2024-06-20 10:00' },
+                        'python3': { type: 'file', size: '4.8 MB', modified: '2024-06-20 10:00' },
+                        'nano': { type: 'file', size: '245 KB', modified: '2024-06-20 10:00' },
+                        'git': { type: 'file', size: '2.1 MB', modified: '2024-06-20 10:00' },
+                        'arduino-cli': { type: 'file', size: '15.3 MB', modified: '2024-06-20 10:00' }
+                    }
+                },
+                '/var/log': {
+                    type: 'directory',
+                    contents: {
+                        'system.log': { type: 'file', size: '45.2 KB', modified: '2024-06-28 17:30' },
+                        'error.log': { type: 'file', size: '12.8 KB', modified: '2024-06-28 16:45' },
+                        'boot.log': { type: 'file', size: '8.9 KB', modified: '2024-06-28 08:00' },
+                        'kernel.log': { type: 'file', size: '23.4 KB', modified: '2024-06-28 17:25' }
+                    }
+                },
+                '/dev': {
+                    type: 'directory',
+                    contents: {
+                        'ttyUSB0': { type: 'device', size: '0 B', modified: '2024-06-28 17:30' },
+                        'ttyACM0': { type: 'device', size: '0 B', modified: '2024-06-28 17:30' },
+                        'sda1': { type: 'device', size: '0 B', modified: '2024-06-28 08:00' },
+                        'i2c-1': { type: 'device', size: '0 B', modified: '2024-06-28 08:00' },
+                        'spidev0.0': { type: 'device', size: '0 B', modified: '2024-06-28 08:00' }
+                    }
+                }
+            }
+        };
+
+        // File Manager Functions
+        function populateFileManager() {
+            const fileContent = document.getElementById('file-content');
+            const addressBar = document.getElementById('address-bar');
+
+            if (!fileContent || !addressBar) return;
+
+            addressBar.value = fileManagerData.currentPath;
+
+            const currentDir = fileManagerData.fileSystem[fileManagerData.currentPath];
+            if (!currentDir || !currentDir.contents) {
+                fileContent.innerHTML = '<div style="text-align: center; color: #666; padding: 50px;">Directory not found or empty</div>';
+                return;
+            }
+
+            const viewMode = fileManagerData.viewMode;
+            let html = '';
+
+            if (viewMode === 'grid') {
+                html = '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px;">';
+
+                Object.entries(currentDir.contents).forEach(([name, info]) => {
+                    const icon = getFileIcon(name, info.type);
+                    html += `
+                        <div class="file-item" onclick="handleFileClick('${name}')" oncontextmenu="showFileContextMenu(event, '${name}')"
+                             style="text-align: center; padding: 15px; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: white; border: 1px solid #e0e0e0;">
+                            <div style="font-size: 48px; margin-bottom: 8px;">${icon}</div>
+                            <div style="font-size: 13px; font-weight: bold; margin-bottom: 4px; word-break: break-word;">${name}</div>
+                            <div style="font-size: 11px; color: #666;">${info.size}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            } else if (viewMode === 'list') {
+                html = '<div style="display: flex; flex-direction: column; gap: 2px;">';
+
+                Object.entries(currentDir.contents).forEach(([name, info]) => {
+                    const icon = getFileIcon(name, info.type);
+                    html += `
+                        <div class="file-item" onclick="handleFileClick('${name}')" oncontextmenu="showFileContextMenu(event, '${name}')"
+                             style="display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: background 0.2s;">
+                            <div style="font-size: 24px;">${icon}</div>
+                            <div style="flex: 1; font-size: 14px; font-weight: 500;">${name}</div>
+                            <div style="font-size: 12px; color: #666; min-width: 80px;">${info.size}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            } else if (viewMode === 'details') {
+                html = `
+                    <div style="background: #f8f9fa; padding: 8px 12px; border-radius: 6px; margin-bottom: 10px; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; font-weight: bold; font-size: 12px; color: #666;">
+                        <div>Name</div>
+                        <div>Size</div>
+                        <div>Modified</div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; gap: 2px;">
+                `;
+
+                Object.entries(currentDir.contents).forEach(([name, info]) => {
+                    const icon = getFileIcon(name, info.type);
+                    html += `
+                        <div class="file-item" onclick="handleFileClick('${name}')" oncontextmenu="showFileContextMenu(event, '${name}')"
+                             style="display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; align-items: center; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: background 0.2s;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-size: 20px;">${icon}</span>
+                                <span style="font-size: 14px;">${name}</span>
+                            </div>
+                            <div style="font-size: 12px; color: #666;">${info.size}</div>
+                            <div style="font-size: 12px; color: #666;">${info.modified}</div>
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+            }
+
+            fileContent.innerHTML = html;
+
+            // Add hover effects
+            setTimeout(() => {
+                document.querySelectorAll('.file-item').forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        item.style.background = '#f0f8ff';
+                        item.style.transform = 'translateY(-1px)';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        item.style.background = '';
+                        item.style.transform = 'translateY(0)';
+                    });
+                });
+            }, 100);
+        }
+
+        function getFileIcon(name, type) {
+            if (type === 'directory') return '📁';
+            if (type === 'device') return '🔌';
+
+            const ext = name.split('.').pop().toLowerCase();
+            const iconMap = {
+                'txt': '📄', 'log': '📋', 'json': '⚙️', 'xml': '📋',
+                'pdf': '📕', 'doc': '📘', 'docx': '📘', 'ppt': '📊', 'pptx': '📊',
+                'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'bmp': '🖼️',
+                'mp3': '🎵', 'wav': '🎵', 'flac': '🎵', 'ogg': '🎵',
+                'mp4': '🎬', 'avi': '🎬', 'mkv': '🎬', 'mov': '🎬',
+                'zip': '📦', 'rar': '📦', 'tar': '📦', 'gz': '📦',
+                'exe': '⚙️', 'bin': '⚙️', 'app': '⚙️',
+                'c': '💻', 'cpp': '💻', 'h': '💻', 'py': '🐍', 'js': '📜', 'html': '🌐', 'css': '🎨',
+                'ino': '🔧', 'hex': '🔧'
+            };
+
+            return iconMap[ext] || '📄';
+        }
+
+        function handleFileClick(fileName) {
+            const currentDir = fileManagerData.fileSystem[fileManagerData.currentPath];
+            const fileInfo = currentDir.contents[fileName];
+
+            if (fileInfo.type === 'directory') {
+                const newPath = fileManagerData.currentPath === '/'
+                    ? `/${fileName}`
+                    : `${fileManagerData.currentPath}/${fileName}`;
+                navigateToPath(newPath);
+            } else {
+                // Open file (simulate)
+                showNotification(`Opening ${fileName}...`, 'info');
+                setTimeout(() => {
+                    showNotification(`${fileName} opened in default application`, 'success');
+                }, 1000);
+            }
+        }
+
+        function navigateToPath(path = null) {
+            const targetPath = path || document.getElementById('address-bar').value;
+
+            if (fileManagerData.fileSystem[targetPath]) {
+                // Add to history if it's a new path
+                if (targetPath !== fileManagerData.currentPath) {
+                    fileManagerData.history = fileManagerData.history.slice(0, fileManagerData.historyIndex + 1);
+                    fileManagerData.history.push(targetPath);
+                    fileManagerData.historyIndex = fileManagerData.history.length - 1;
+                }
+
+                fileManagerData.currentPath = targetPath;
+                populateFileManager();
+                updateNavigationButtons();
+                showNotification(`Navigated to ${targetPath}`, 'info');
+            } else {
+                showNotification(`Path not found: ${targetPath}`, 'error');
+            }
+        }
+
+        function navigateToQuickPath(path) {
+            navigateToPath(path);
+        }
+
+        function navigateBack() {
+            if (fileManagerData.historyIndex > 0) {
+                fileManagerData.historyIndex--;
+                fileManagerData.currentPath = fileManagerData.history[fileManagerData.historyIndex];
+                populateFileManager();
+                updateNavigationButtons();
+            }
+        }
+
+        function navigateForward() {
+            if (fileManagerData.historyIndex < fileManagerData.history.length - 1) {
+                fileManagerData.historyIndex++;
+                fileManagerData.currentPath = fileManagerData.history[fileManagerData.historyIndex];
+                populateFileManager();
+                updateNavigationButtons();
+            }
+        }
+
+        function navigateUp() {
+            const pathParts = fileManagerData.currentPath.split('/').filter(p => p);
+            if (pathParts.length > 0) {
+                pathParts.pop();
+                const parentPath = pathParts.length === 0 ? '/' : '/' + pathParts.join('/');
+                navigateToPath(parentPath);
+            }
+        }
+
+        function updateNavigationButtons() {
+            const backBtn = document.getElementById('back-btn');
+            const forwardBtn = document.getElementById('forward-btn');
+
+            if (backBtn) {
+                backBtn.disabled = fileManagerData.historyIndex <= 0;
+                backBtn.style.opacity = backBtn.disabled ? '0.5' : '1';
+            }
+
+            if (forwardBtn) {
+                forwardBtn.disabled = fileManagerData.historyIndex >= fileManagerData.history.length - 1;
+                forwardBtn.style.opacity = forwardBtn.disabled ? '0.5' : '1';
+            }
+        }
+
+        function refreshFileManager() {
+            showNotification('Refreshing file manager...', 'info');
+            setTimeout(() => {
+                populateFileManager();
+                showNotification('File manager refreshed', 'success');
+            }, 500);
+        }
+
+        function changeViewMode() {
+            const viewMode = document.getElementById('view-mode').value;
+            fileManagerData.viewMode = viewMode;
+            populateFileManager();
+            showNotification(`View mode changed to ${viewMode}`, 'info');
+        }
+
+        function createNewFolder() {
+            const folderName = prompt('Enter folder name:');
+            if (folderName && folderName.trim()) {
+                const currentDir = fileManagerData.fileSystem[fileManagerData.currentPath];
+                if (currentDir && !currentDir.contents[folderName]) {
+                    currentDir.contents[folderName] = {
+                        type: 'directory',
+                        size: '4.0 KB',
+                        modified: new Date().toLocaleString()
+                    };
+                    populateFileManager();
+                    showNotification(`Folder "${folderName}" created successfully`, 'success');
+                } else {
+                    showNotification(`Folder "${folderName}" already exists`, 'error');
+                }
+            }
+        }
+
+        function createNewFile() {
+            const fileName = prompt('Enter file name:');
+            if (fileName && fileName.trim()) {
+                const currentDir = fileManagerData.fileSystem[fileManagerData.currentPath];
+                if (currentDir && !currentDir.contents[fileName]) {
+                    currentDir.contents[fileName] = {
+                        type: 'file',
+                        size: '0 B',
+                        modified: new Date().toLocaleString()
+                    };
+                    populateFileManager();
+                    showNotification(`File "${fileName}" created successfully`, 'success');
+                } else {
+                    showNotification(`File "${fileName}" already exists`, 'error');
+                }
+            }
+        }
+
+        function handleAddressBarEnter(event) {
+            if (event.key === 'Enter') {
+                navigateToPath();
+            }
+        }
+
+        function showFileContextMenu(event, fileName) {
+            event.preventDefault();
+            // Context menu functionality would go here
+            showNotification(`Context menu for ${fileName}`, 'info');
+        }
+
+        // Initialize when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            updateClock();
+            setInterval(updateClock, 1000);
+            initializeSettings();
+
+            // Initialize App Store
+            setTimeout(() => {
+                populateAppsGrid();
+            }, 500);
+
+            // Initialize File Manager
+            setTimeout(() => {
+                populateFileManager();
+                updateNavigationButtons();
+
+                // Add sidebar hover effects
+                document.querySelectorAll('.sidebar-item').forEach(item => {
+                    item.addEventListener('mouseenter', () => {
+                        item.style.background = '#f0f8ff';
+                    });
+                    item.addEventListener('mouseleave', () => {
+                        item.style.background = '';
+                    });
+                });
+            }, 600);
+
+            // Start real-time data updates
+            realtimeDataInterval = setInterval(updateRealtimeData, 2000);
+            systemMetricsInterval = setInterval(updateSystemMetrics, 1000);
+
+            showNotification('Kronos OS Educational System loaded successfully!', 'success');
+        });
+
+        // Close start menu when clicking outside
+        document.addEventListener('click', function(e) {
+            const startMenu = document.getElementById('start-menu');
+            const startButton = document.querySelector('.start-button');
+
+            if (!startMenu.contains(e.target) && !startButton.contains(e.target)) {
+                closeStartMenu();
+            }
+        });
+
+        // Add CSS animation for blinking cursor
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes blink {
+                0%, 50% { opacity: 1; }
+                51%, 100% { opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

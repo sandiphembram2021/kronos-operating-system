@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Interactive Demo</title>
+    <style>
+        body {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+            overflow: hidden;
+        }
+        
+        .terminal {
+            width: 100%;
+            height: 90vh;
+            background: #000;
+            border: 2px solid #00ff00;
+            padding: 10px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .header {
+            color: #00ffff;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .prompt {
+            color: #00ff00;
+        }
+        
+        .input {
+            background: transparent;
+            border: none;
+            color: #00ff00;
+            font-family: inherit;
+            font-size: inherit;
+            outline: none;
+            width: 200px;
+        }
+        
+        .boot-sequence {
+            color: #ffff00;
+        }
+        
+        .error {
+            color: #ff0000;
+        }
+        
+        .success {
+            color: #00ff00;
+        }
+        
+        .info {
+            color: #00ffff;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>╔══════════════════════════════════════════════════════════════╗</h1>
+        <h1>║                        KRONOS OS v1.0                       ║</h1>
+        <h1>║                   64-bit Operating System                   ║</h1>
+        <h1>║                     Interactive Demo                        ║</h1>
+        <h1>╚══════════════════════════════════════════════════════════════╝</h1>
+    </div>
+    
+    <div class="terminal" id="terminal">
+        <div class="boot-sequence">Kronos OS v1.0 - 64-bit Operating System
+========================================
+
+Initializing kernel subsystems...
+Setting up GDT... OK
+Setting up IDT... OK
+Installing IRQ handlers... OK
+Initializing memory management... OK
+Initializing keyboard driver... OK
+Initializing shell... OK
+
+Kernel initialization complete!
+Type 'help' for available commands.
+
+</div>
+        <span class="prompt">kronos$ </span><input type="text" class="input" id="commandInput" autofocus>
+    </div>
+
+    <script>
+        const terminal = document.getElementById('terminal');
+        const commandInput = document.getElementById('commandInput');
+        
+        let uptime = 0;
+        let memoryUsed = 1024; // KB
+        let memoryTotal = 8192; // KB
+        
+        // Start uptime counter
+        setInterval(() => {
+            uptime++;
+        }, 1000);
+        
+        const commands = {
+            help: () => {
+                return `Kronos OS v1.0 - Available Commands:
+====================================
+  help          - Show this help message
+  clear         - Clear the screen
+  meminfo       - Show memory information
+  uptime        - Show system uptime
+  echo [text]   - Echo text to console
+  reboot        - Reboot the system
+  halt          - Halt the system
+  about         - About Kronos OS
+  demo          - Show demo information
+
+Type any command above to try it!`;
+            },
+            
+            clear: () => {
+                terminal.innerHTML = '<span class="prompt">kronos$ </span><input type="text" class="input" id="commandInput" autofocus>';
+                setupInput();
+                return '';
+            },
+            
+            meminfo: () => {
+                const used = memoryUsed;
+                const total = memoryTotal;
+                const free = total - used;
+                const usage = Math.round((used / total) * 100);
+                
+                return `Memory Information:
+==================
+Total:  ${total} KB
+Used:   ${used} KB
+Free:   ${free} KB
+Usage:  ${usage}%
+`;
+            },
+            
+            uptime: () => {
+                return `System uptime: ${uptime} seconds`;
+            },
+            
+            echo: (args) => {
+                return args || '';
+            },
+            
+            reboot: () => {
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+                return 'Rebooting system...';
+            },
+            
+            halt: () => {
+                terminal.innerHTML += '\n<span class="success">System halted. You can safely close this window.</span>';
+                commandInput.disabled = true;
+                return '';
+            },
+            
+            about: () => {
+                return `Kronos OS v1.0 - 64-bit Operating System
+==========================================
+
+Features:
+- 64-bit x86_64 architecture
+- GRUB2 multiboot2 bootloader
+- Global Descriptor Table (GDT)
+- Interrupt Descriptor Table (IDT)
+- Physical memory management
+- VGA text mode driver
+- PS/2 keyboard driver
+- Interactive CLI shell
+
+Author: Sandip Hembram
+Date: 2025-06-28
+
+This is a demonstration of the actual Kronos OS
+that runs on real hardware and virtual machines.
+`;
+            },
+            
+            demo: () => {
+                return `Kronos OS Demo Information:
+=========================
+
+This is an interactive web demonstration of Kronos OS.
+The actual operating system is built in C and x86_64 Assembly.
+
+Real Kronos OS features:
+- Boots from GRUB2 bootloader
+- Runs in 64-bit long mode
+- Hardware interrupt handling
+- Physical memory allocation
+- Device drivers for VGA and keyboard
+- Complete build system with Makefile
+
+To run the real Kronos OS:
+1. Set up WSL2 or Linux environment
+2. Install cross-compiler tools
+3. Build with: make && make iso && make run
+4. Boots in QEMU or real hardware
+
+Source code structure:
+- src/boot/     - Boot code and multiboot header
+- src/kernel/   - Core kernel (GDT, IDT, main)
+- src/drivers/  - VGA and keyboard drivers
+- src/mm/       - Memory management
+- src/shell/    - Command shell
+- src/include/  - Header files
+`;
+            }
+        };
+        
+        function executeCommand(input) {
+            const parts = input.trim().split(' ');
+            const cmd = parts[0].toLowerCase();
+            const args = parts.slice(1).join(' ');
+
+            console.log('Executing command:', cmd, 'with args:', args); // Debug
+
+            if (cmd === '') {
+                return '';
+            } else if (commands[cmd]) {
+                const result = commands[cmd](args);
+                console.log('Command result:', result); // Debug
+                return result;
+            } else {
+                return `ksh: command not found: ${cmd}
+Type 'help' for available commands.`;
+            }
+        }
+        
+        function setupInput() {
+            const newInput = document.getElementById('commandInput');
+            if (newInput) {
+                newInput.addEventListener('keypress', handleCommand);
+                newInput.focus();
+            }
+        }
+        
+        function handleCommand(e) {
+            if (e.key === 'Enter') {
+                const command = e.target.value;
+                const output = executeCommand(command);
+
+                // Add command to terminal
+                terminal.innerHTML += command + '\n';
+
+                if (output && output.trim() !== '') {
+                    terminal.innerHTML += '<span class="info">' + output + '</span>\n';
+                }
+
+                // Add new prompt
+                if (command.toLowerCase() !== 'clear' && command.toLowerCase() !== 'halt') {
+                    terminal.innerHTML += '<span class="prompt">kronos$ </span><input type="text" class="input" id="commandInput" autofocus>';
+                    setupInput();
+                }
+
+                // Scroll to bottom
+                terminal.scrollTop = terminal.scrollHeight;
+
+                // Simulate memory usage
+                memoryUsed += Math.floor(Math.random() * 10);
+                if (memoryUsed > memoryTotal * 0.9) {
+                    memoryUsed = 1024;
+                }
+
+                // Clear the input
+                e.target.value = '';
+            }
+        }
+        
+        setupInput();
+        
+        // Welcome message
+        setTimeout(() => {
+            terminal.innerHTML += '<span class="success">Welcome to Kronos Shell (ksh)</span>\n<span class="prompt">kronos$ </span><input type="text" class="input" id="commandInput" autofocus>';
+            setupInput();
+        }, 1000);
+    </script>
+</body>
+</html>

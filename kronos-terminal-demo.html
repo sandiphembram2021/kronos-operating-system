@@ -1,0 +1,928 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Advanced Terminal Emulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Ubuntu', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .terminal-window {
+            width: 1000px;
+            height: 700px;
+            background: #1e1e1e;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #444;
+        }
+        
+        .terminal-header {
+            background: linear-gradient(to right, #E95420, #D44414);
+            color: white;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .terminal-title {
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .terminal-controls {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .control-btn {
+            width: 18px;
+            height: 18px;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .minimize { background: #FFC107; color: #333; }
+        .maximize { background: #28A745; color: white; }
+        .close { background: #DC3545; color: white; }
+        
+        .terminal-toolbar {
+            background: #2d2d2d;
+            border-bottom: 1px solid #444;
+            padding: 8px 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .toolbar-btn {
+            background: #444;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: background 0.2s;
+        }
+        
+        .toolbar-btn:hover {
+            background: #555;
+        }
+        
+        .terminal-status {
+            margin-left: auto;
+            color: #888;
+            font-size: 12px;
+        }
+        
+        .terminal-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: #1e1e1e;
+        }
+        
+        .terminal-output {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.4;
+            color: #ffffff;
+        }
+        
+        .terminal-input-area {
+            background: #2d2d2d;
+            border-top: 1px solid #444;
+            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .terminal-prompt {
+            color: #00ff00;
+            font-weight: bold;
+            margin-right: 8px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .terminal-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            outline: none;
+        }
+        
+        .terminal-line {
+            margin-bottom: 2px;
+            word-wrap: break-word;
+        }
+        
+        .terminal-line.command {
+            color: #ffd93d;
+        }
+        
+        .terminal-line.output {
+            color: #ffffff;
+        }
+        
+        .terminal-line.error {
+            color: #ff6b6b;
+        }
+        
+        .terminal-line.info {
+            color: #4ecdc4;
+        }
+        
+        .terminal-line.success {
+            color: #51cf66;
+        }
+        
+        .terminal-output::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-track {
+            background: #2d2d2d;
+        }
+        
+        .terminal-output::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+        
+        .terminal-output::-webkit-scrollbar-thumb:hover {
+            background: #666;
+        }
+        
+        .welcome-text {
+            color: #00ff00;
+            margin-bottom: 15px;
+        }
+        
+        .demo-info {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 300px;
+            z-index: 1000;
+        }
+        
+        .demo-info h3 {
+            margin-bottom: 10px;
+            color: #E95420;
+        }
+        
+        .demo-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+        
+        .demo-info li {
+            margin-bottom: 5px;
+            padding-left: 15px;
+            position: relative;
+        }
+        
+        .demo-info li:before {
+            content: "▶";
+            position: absolute;
+            left: 0;
+            color: #E95420;
+        }
+        
+        .blink {
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+        
+        .typing {
+            border-right: 2px solid #00ff00;
+            animation: blink 1s infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-info">
+        <h3>🖥️ Terminal Demo</h3>
+        <ul>
+            <li>Type 'help' for commands</li>
+            <li>Use ↑/↓ for history</li>
+            <li>Tab for completion</li>
+            <li>Try: ls, cd, cat, ps, top</li>
+            <li>Full Unix-like experience</li>
+        </ul>
+    </div>
+
+    <div class="terminal-window">
+        <div class="terminal-header">
+            <div class="terminal-title">
+                <span>🖥️</span>
+                <span>Kronos Terminal - Advanced Shell Environment</span>
+            </div>
+            <div class="terminal-controls">
+                <button class="control-btn minimize" onclick="minimizeTerminal()">−</button>
+                <button class="control-btn maximize" onclick="maximizeTerminal()">□</button>
+                <button class="control-btn close" onclick="closeTerminal()">×</button>
+            </div>
+        </div>
+
+        <div class="terminal-toolbar">
+            <button class="toolbar-btn" onclick="clearTerminal()">🗑️ Clear</button>
+            <button class="toolbar-btn" onclick="copyOutput()">📋 Copy</button>
+            <button class="toolbar-btn" onclick="pasteInput()">📄 Paste</button>
+            <button class="toolbar-btn" onclick="showHelp()">❓ Help</button>
+            <div class="terminal-status" id="status">Ready - Type commands below</div>
+        </div>
+
+        <div class="terminal-content">
+            <div class="terminal-output" id="output">
+                <div class="welcome-text">
+                    ╔══════════════════════════════════════════════════════════════╗<br>
+                    ║                 Kronos OS Terminal v2.0.1                    ║<br>
+                    ║              Advanced Shell Environment                      ║<br>
+                    ║                                                              ║<br>
+                    ║  Copyright (c) 2024 Kronos OS Project. All rights reserved. ║<br>
+                    ║                                                              ║<br>
+                    ║  Welcome to the most advanced terminal emulator!            ║<br>
+                    ║  Type 'help' to see available commands.                     ║<br>
+                    ║  Use ↑/↓ arrows for command history navigation.             ║<br>
+                    ║  Press Tab for intelligent command completion.              ║<br>
+                    ╚══════════════════════════════════════════════════════════════╝<br><br>
+                </div>
+                <div id="terminal-lines">
+                    <div class="terminal-line">
+                        <span class="terminal-prompt">user@kronos-desktop:~$ </span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="terminal-input-area">
+                <span class="terminal-prompt">user@kronos-desktop:~$ </span>
+                <input type="text" class="terminal-input" id="commandInput" 
+                       placeholder="Enter command..." 
+                       onkeydown="handleKeyDown(event)"
+                       autocomplete="off" autofocus>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Terminal state
+        let commandHistory = [];
+        let historyIndex = -1;
+        let currentDirectory = '/home/user';
+        let environment = {
+            USER: 'user',
+            HOME: '/home/user',
+            PATH: '/bin:/usr/bin:/usr/local/bin',
+            SHELL: '/bin/ksh',
+            TERM: 'kronos-terminal',
+            PWD: '/home/user'
+        };
+
+        // Simulated file system
+        let fileSystem = {
+            '/': {
+                type: 'directory',
+                contents: {
+                    'home': {
+                        type: 'directory',
+                        contents: {
+                            'user': {
+                                type: 'directory',
+                                contents: {
+                                    'documents': { type: 'directory', contents: {} },
+                                    'downloads': { type: 'directory', contents: {} },
+                                    'desktop': { type: 'directory', contents: {} },
+                                    'projects': {
+                                        type: 'directory',
+                                        contents: {
+                                            'kronos-os': { type: 'directory', contents: {} },
+                                            'web-app': { type: 'directory', contents: {} }
+                                        }
+                                    },
+                                    'readme.txt': {
+                                        type: 'file',
+                                        content: 'Welcome to Kronos OS!\n\nThis is your home directory.\nFeel free to explore the system using terminal commands.\n\nTry these commands:\n- ls (list files)\n- cd (change directory)\n- cat (view file contents)\n- help (show all commands)'
+                                    },
+                                    'welcome.sh': {
+                                        type: 'file',
+                                        content: '#!/bin/bash\necho "Welcome to Kronos OS!"\necho "System: $(uname -a)"\necho "User: $(whoami)"\necho "Date: $(date)"'
+                                    },
+                                    'system-info.txt': {
+                                        type: 'file',
+                                        content: 'Kronos OS System Information\n============================\n\nOS: Kronos OS 2.0.1 LTS\nKernel: 5.15.0-kronos\nArchitecture: x86_64\nCPU: Intel Core i7-8550U\nMemory: 8 GB RAM\nStorage: 256 GB SSD\n\nInstalled: January 15, 2024\nLast Updated: January 20, 2024'
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    'bin': {
+                        type: 'directory',
+                        contents: {
+                            'ls': { type: 'executable' },
+                            'cat': { type: 'executable' },
+                            'pwd': { type: 'executable' },
+                            'cd': { type: 'executable' },
+                            'mkdir': { type: 'executable' },
+                            'rm': { type: 'executable' },
+                            'cp': { type: 'executable' },
+                            'mv': { type: 'executable' },
+                            'grep': { type: 'executable' },
+                            'find': { type: 'executable' },
+                            'ps': { type: 'executable' },
+                            'top': { type: 'executable' }
+                        }
+                    },
+                    'usr': {
+                        type: 'directory',
+                        contents: {
+                            'bin': { type: 'directory', contents: {} },
+                            'lib': { type: 'directory', contents: {} },
+                            'share': { type: 'directory', contents: {} }
+                        }
+                    },
+                    'etc': {
+                        type: 'directory',
+                        contents: {
+                            'passwd': {
+                                type: 'file',
+                                content: 'root:x:0:0:root:/root:/bin/bash\nuser:x:1000:1000:user:/home/user:/bin/ksh'
+                            },
+                            'hostname': { type: 'file', content: 'kronos-desktop' },
+                            'hosts': {
+                                type: 'file',
+                                content: '127.0.0.1\tlocalhost\n127.0.1.1\tkronos-desktop\n::1\tlocalhost ip6-localhost ip6-loopback'
+                            }
+                        }
+                    },
+                    'var': {
+                        type: 'directory',
+                        contents: {
+                            'log': { type: 'directory', contents: {} },
+                            'tmp': { type: 'directory', contents: {} }
+                        }
+                    }
+                }
+            }
+        };
+
+        // Initialize terminal
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('commandInput').focus();
+            updateStatus('Terminal ready - Type your first command!');
+
+            // Show a welcome animation
+            setTimeout(() => {
+                addOutput('System initialized successfully!', 'success');
+                addOutput('All services are running normally.', 'info');
+                addOutput('', 'output');
+            }, 1000);
+        });
+
+        // Handle keyboard input
+        function handleKeyDown(event) {
+            const input = document.getElementById('commandInput');
+
+            if (event.key === 'Enter') {
+                const command = input.value.trim();
+                if (command) {
+                    // Add to history
+                    commandHistory.push(command);
+                    historyIndex = commandHistory.length;
+
+                    // Display command
+                    addOutput(`user@kronos-desktop:${getDisplayPath()}$ ${command}`, 'command');
+
+                    // Execute command
+                    executeCommand(command);
+                }
+
+                // Clear input and add new prompt
+                input.value = '';
+                addPrompt();
+                scrollToBottom();
+
+            } else if (event.key === 'ArrowUp') {
+                // Navigate history up
+                if (historyIndex > 0) {
+                    historyIndex--;
+                    input.value = commandHistory[historyIndex];
+                }
+                event.preventDefault();
+
+            } else if (event.key === 'ArrowDown') {
+                // Navigate history down
+                if (historyIndex < commandHistory.length - 1) {
+                    historyIndex++;
+                    input.value = commandHistory[historyIndex];
+                } else {
+                    historyIndex = commandHistory.length;
+                    input.value = '';
+                }
+                event.preventDefault();
+
+            } else if (event.key === 'Tab') {
+                // Tab completion
+                event.preventDefault();
+                const completion = getTabCompletion(input.value);
+                if (completion) {
+                    input.value = completion;
+                }
+
+            } else if (event.ctrlKey && event.key === 'c') {
+                // Ctrl+C simulation
+                event.preventDefault();
+                addOutput('^C', 'error');
+                addPrompt();
+                input.value = '';
+                updateStatus('Command interrupted');
+
+            } else if (event.ctrlKey && event.key === 'l') {
+                // Ctrl+L clear screen
+                event.preventDefault();
+                clearTerminal();
+            }
+        }
+
+        // Execute command
+        function executeCommand(command) {
+            const parts = command.split(' ').filter(p => p);
+            const cmd = parts[0];
+            const args = parts.slice(1);
+
+            updateStatus(`Executing: ${cmd}`);
+
+            switch (cmd) {
+                case 'help':
+                    showHelpCommand();
+                    break;
+                case 'clear':
+                    clearTerminal();
+                    break;
+                case 'ls':
+                    listDirectory(args);
+                    break;
+                case 'pwd':
+                    addOutput(currentDirectory, 'output');
+                    break;
+                case 'cd':
+                    changeDirectory(args[0] || environment.HOME);
+                    break;
+                case 'cat':
+                    catFile(args[0]);
+                    break;
+                case 'echo':
+                    addOutput(args.join(' '), 'output');
+                    break;
+                case 'date':
+                    addOutput(new Date().toString(), 'output');
+                    break;
+                case 'whoami':
+                    addOutput(environment.USER, 'output');
+                    break;
+                case 'uname':
+                    if (args.includes('-a')) {
+                        addOutput('Kronos 5.15.0-kronos #1 SMP PREEMPT x86_64 GNU/Linux', 'output');
+                    } else {
+                        addOutput('Kronos', 'output');
+                    }
+                    break;
+                case 'ps':
+                    showProcesses();
+                    break;
+                case 'uptime':
+                    showUptime();
+                    break;
+                case 'env':
+                    showEnvironment();
+                    break;
+                case 'history':
+                    showCommandHistory();
+                    break;
+                case 'tree':
+                    showTree(args[0]);
+                    break;
+                case 'exit':
+                case 'logout':
+                    addOutput('Logout initiated...', 'info');
+                    addOutput('Session ended - demo mode', 'success');
+                    break;
+                case '':
+                    // Empty command
+                    break;
+                default:
+                    addOutput(`ksh: ${cmd}: command not found`, 'error');
+                    addOutput(`Type 'help' for available commands`, 'info');
+            }
+
+            updateStatus('Ready');
+        }
+
+        // Command implementations
+        function showHelpCommand() {
+            const helpText = `
+<span style="color: #00ff00;">Kronos OS Terminal - Available Commands:</span>
+
+<span style="color: #4ecdc4;">File Operations:</span>
+  ls [path]          - List directory contents
+  cd [path]          - Change directory
+  pwd                - Print working directory
+  cat &lt;file&gt;         - Display file contents
+  tree [path]        - Show directory tree
+
+<span style="color: #4ecdc4;">System Information:</span>
+  ps                 - Show running processes
+  uptime             - Show system uptime
+  uname [-a]         - Show system information
+  whoami             - Show current user
+  env                - Show environment variables
+  date               - Show current date/time
+
+<span style="color: #4ecdc4;">Utilities:</span>
+  history            - Show command history
+  clear              - Clear terminal
+  help               - Show this help
+  echo &lt;text&gt;        - Display text
+
+<span style="color: #4ecdc4;">Navigation:</span>
+  Use ↑/↓ arrows for command history
+  Use Tab for command completion
+  Use Ctrl+C to cancel (simulated)
+  Use Ctrl+L to clear screen
+            `;
+            addOutput(helpText, 'output', true);
+        }
+
+        function listDirectory(args) {
+            const path = args[0] || currentDirectory;
+            const resolvedPath = resolvePath(path);
+            const dir = getFileSystemNode(resolvedPath);
+
+            if (!dir) {
+                addOutput(`ls: cannot access '${path}': No such file or directory`, 'error');
+                return;
+            }
+
+            if (dir.type !== 'directory') {
+                addOutput(`ls: ${path}: Not a directory`, 'error');
+                return;
+            }
+
+            const contents = Object.keys(dir.contents || {});
+            if (contents.length === 0) {
+                addOutput('', 'output');
+                return;
+            }
+
+            // Format output with colors
+            let output = '';
+            contents.forEach((name, index) => {
+                const item = dir.contents[name];
+                const color = item.type === 'directory' ? '#4A90E2' :
+                             item.type === 'executable' ? '#28A745' : '#ffffff';
+                output += `<span style="color: ${color};">${name}</span>`;
+                if ((index + 1) % 4 === 0) output += '<br>';
+                else output += '&nbsp;&nbsp;&nbsp;&nbsp;';
+            });
+
+            addOutput(output, 'output', true);
+        }
+
+        function changeDirectory(path) {
+            if (!path) path = environment.HOME;
+
+            const resolvedPath = resolvePath(path);
+            const dir = getFileSystemNode(resolvedPath);
+
+            if (!dir) {
+                addOutput(`cd: ${path}: No such file or directory`, 'error');
+                return;
+            }
+
+            if (dir.type !== 'directory') {
+                addOutput(`cd: ${path}: Not a directory`, 'error');
+                return;
+            }
+
+            currentDirectory = resolvedPath;
+            environment.PWD = currentDirectory;
+            updatePrompt();
+        }
+
+        function catFile(filename) {
+            if (!filename) {
+                addOutput('cat: missing file operand', 'error');
+                return;
+            }
+
+            const path = resolvePath(filename);
+            const file = getFileSystemNode(path);
+
+            if (!file) {
+                addOutput(`cat: ${filename}: No such file or directory`, 'error');
+                return;
+            }
+
+            if (file.type === 'directory') {
+                addOutput(`cat: ${filename}: Is a directory`, 'error');
+                return;
+            }
+
+            if (file.type !== 'file') {
+                addOutput(`cat: ${filename}: Permission denied`, 'error');
+                return;
+            }
+
+            addOutput(file.content || '', 'output');
+        }
+
+        function showProcesses() {
+            const processes = [
+                'PID  TTY          TIME CMD',
+                '1    ?        00:00:01 systemd',
+                '2    ?        00:00:00 kthreadd',
+                '123  pts/0    00:00:00 ksh',
+                '456  ?        00:00:02 kronos-desktop',
+                '789  ?        00:00:01 system-monitor',
+                '1001 pts/0    00:00:00 ps'
+            ];
+
+            processes.forEach(line => addOutput(line, 'output'));
+        }
+
+        function showUptime() {
+            addOutput('14:32:18 up 2 days, 14:32, 1 user, load average: 0.85, 0.72, 0.68', 'output');
+        }
+
+        function showEnvironment() {
+            Object.keys(environment).forEach(key => {
+                addOutput(`${key}=${environment[key]}`, 'output');
+            });
+        }
+
+        function showCommandHistory() {
+            commandHistory.forEach((cmd, index) => {
+                addOutput(`${index + 1}  ${cmd}`, 'output');
+            });
+        }
+
+        function showTree(path) {
+            const startPath = path ? resolvePath(path) : currentDirectory;
+            const node = getFileSystemNode(startPath);
+
+            if (!node) {
+                addOutput(`tree: ${path}: No such file or directory`, 'error');
+                return;
+            }
+
+            addOutput(startPath, 'output');
+            if (node.type === 'directory') {
+                showTreeRecursive(node, '', true);
+            }
+        }
+
+        function showTreeRecursive(node, prefix, isLast) {
+            if (!node.contents) return;
+
+            const entries = Object.entries(node.contents);
+            entries.forEach(([name, item], index) => {
+                const isLastEntry = index === entries.length - 1;
+                const connector = isLastEntry ? '└── ' : '├── ';
+                const color = item.type === 'directory' ? '#4A90E2' : '#ffffff';
+
+                addOutput(`${prefix}${connector}<span style="color: ${color};">${name}</span>`, 'output', true);
+
+                if (item.type === 'directory' && item.contents) {
+                    const newPrefix = prefix + (isLastEntry ? '    ' : '│   ');
+                    showTreeRecursive(item, newPrefix, false);
+                }
+            });
+        }
+
+        // Utility functions
+        function addOutput(text, type = 'output', isHtml = false) {
+            const lines = document.getElementById('terminal-lines');
+            const line = document.createElement('div');
+            line.className = `terminal-line ${type}`;
+
+            if (isHtml) {
+                line.innerHTML = text;
+            } else {
+                line.textContent = text;
+            }
+
+            lines.appendChild(line);
+        }
+
+        function addPrompt() {
+            const lines = document.getElementById('terminal-lines');
+            const line = document.createElement('div');
+            line.className = 'terminal-line';
+            line.innerHTML = `<span class="terminal-prompt">user@kronos-desktop:${getDisplayPath()}$ </span>`;
+            lines.appendChild(line);
+        }
+
+        function updatePrompt() {
+            const promptSpans = document.querySelectorAll('.terminal-prompt');
+            const newPrompt = `user@kronos-desktop:${getDisplayPath()}$ `;
+            promptSpans.forEach(span => {
+                if (span.parentElement.classList.contains('terminal-input-area')) {
+                    span.textContent = newPrompt;
+                }
+            });
+        }
+
+        function getDisplayPath() {
+            return currentDirectory.replace(environment.HOME, '~');
+        }
+
+        function resolvePath(path) {
+            if (!path) return currentDirectory;
+
+            if (path.startsWith('/')) {
+                return path;
+            } else if (path.startsWith('~')) {
+                return path.replace('~', environment.HOME);
+            } else {
+                return currentDirectory === '/' ? '/' + path : currentDirectory + '/' + path;
+            }
+        }
+
+        function getFileSystemNode(path) {
+            const parts = path.split('/').filter(p => p);
+            let current = fileSystem['/'];
+
+            for (const part of parts) {
+                if (!current.contents || !current.contents[part]) {
+                    return null;
+                }
+                current = current.contents[part];
+            }
+
+            return current;
+        }
+
+        function getTabCompletion(partial) {
+            const parts = partial.split(' ');
+            const lastPart = parts[parts.length - 1];
+
+            if (parts.length === 1) {
+                // Command completion
+                const commands = ['help', 'clear', 'ls', 'cd', 'pwd', 'cat', 'echo', 'date', 'whoami', 'uname', 'ps', 'uptime', 'env', 'history', 'tree'];
+                const matches = commands.filter(cmd => cmd.startsWith(lastPart));
+                return matches.length === 1 ? matches[0] : null;
+            } else {
+                // File completion
+                const dir = getFileSystemNode(currentDirectory);
+                if (dir && dir.contents) {
+                    const matches = Object.keys(dir.contents).filter(name => name.startsWith(lastPart));
+                    if (matches.length === 1) {
+                        return parts.slice(0, -1).join(' ') + ' ' + matches[0];
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        function scrollToBottom() {
+            const output = document.getElementById('output');
+            output.scrollTop = output.scrollHeight;
+        }
+
+        function updateStatus(message) {
+            document.getElementById('status').textContent = message;
+        }
+
+        // Toolbar functions
+        function clearTerminal() {
+            const lines = document.getElementById('terminal-lines');
+            lines.innerHTML = '<div class="terminal-line"><span class="terminal-prompt">user@kronos-desktop:~$ </span></div>';
+            updateStatus('Terminal cleared');
+        }
+
+        function copyOutput() {
+            const output = document.getElementById('output');
+            const text = output.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                updateStatus('Output copied to clipboard');
+                setTimeout(() => updateStatus('Ready'), 2000);
+            });
+        }
+
+        function pasteInput() {
+            navigator.clipboard.readText().then(text => {
+                const input = document.getElementById('commandInput');
+                input.value += text;
+                input.focus();
+                updateStatus('Text pasted');
+                setTimeout(() => updateStatus('Ready'), 2000);
+            });
+        }
+
+        function showHelp() {
+            showHelpCommand();
+            addPrompt();
+            scrollToBottom();
+        }
+
+        // Window control functions
+        function minimizeTerminal() {
+            const terminal = document.querySelector('.terminal-window');
+            terminal.style.transform = 'scale(0.1)';
+            terminal.style.opacity = '0';
+            terminal.style.transition = 'all 0.3s ease';
+
+            setTimeout(() => {
+                terminal.style.display = 'none';
+                updateStatus('Terminal minimized - click to restore');
+            }, 300);
+        }
+
+        function maximizeTerminal() {
+            const terminal = document.querySelector('.terminal-window');
+            if (terminal.style.width === '100vw') {
+                // Restore
+                terminal.style.width = '1000px';
+                terminal.style.height = '700px';
+                terminal.style.left = '50%';
+                terminal.style.top = '50%';
+                terminal.style.transform = 'translate(-50%, -50%)';
+                updateStatus('Terminal restored');
+            } else {
+                // Maximize
+                terminal.style.width = '100vw';
+                terminal.style.height = '100vh';
+                terminal.style.left = '0';
+                terminal.style.top = '0';
+                terminal.style.transform = 'none';
+                updateStatus('Terminal maximized');
+            }
+        }
+
+        function closeTerminal() {
+            if (confirm('Are you sure you want to close the terminal?')) {
+                const terminal = document.querySelector('.terminal-window');
+                terminal.style.transform = 'scale(0)';
+                terminal.style.opacity = '0';
+                terminal.style.transition = 'all 0.3s ease';
+
+                setTimeout(() => {
+                    window.close();
+                }, 300);
+            }
+        }
+
+        // Click to restore when minimized
+        document.addEventListener('click', function(event) {
+            const terminal = document.querySelector('.terminal-window');
+            if (terminal.style.display === 'none') {
+                terminal.style.display = 'flex';
+                terminal.style.transform = 'scale(1)';
+                terminal.style.opacity = '1';
+                updateStatus('Terminal restored');
+                document.getElementById('commandInput').focus();
+            }
+        });
+    </script>
+</body>
+</html>

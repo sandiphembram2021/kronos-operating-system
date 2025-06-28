@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kronos OS - Simple Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .test-button {
+            background: #E95420;
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            margin: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        
+        .test-button:hover {
+            background: #D44414;
+        }
+        
+        .window {
+            position: absolute;
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            padding: 20px;
+            min-width: 400px;
+            min-height: 300px;
+            display: none;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .window.show {
+            display: block !important;
+        }
+        
+        .window-header {
+            background: #E95420;
+            color: white;
+            padding: 10px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 6px 6px 0 0;
+            font-weight: bold;
+        }
+        
+        .close-btn {
+            float: right;
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .desktop-icon {
+            display: inline-block;
+            text-align: center;
+            margin: 20px;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.1);
+            color: white;
+            min-width: 80px;
+        }
+        
+        .desktop-icon:hover {
+            background: rgba(255,255,255,0.2);
+        }
+        
+        .icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div class="status" id="status">
+        Status: Ready<br>
+        Click icons or buttons to test
+    </div>
+
+    <h1 style="color: white; text-align: center;">Kronos OS - Application Test</h1>
+    
+    <div style="text-align: center; margin: 30px 0;">
+        <button class="test-button" onclick="testFunction()">Test JavaScript</button>
+        <button class="test-button" onclick="openWindow('terminal')">Open Terminal</button>
+        <button class="test-button" onclick="openWindow('files')">Open Files</button>
+        <button class="test-button" onclick="openWindow('calculator')">Open Calculator</button>
+        <button class="test-button" onclick="closeAllWindows()">Close All</button>
+    </div>
+
+    <div style="text-align: center;">
+        <div class="desktop-icon" onclick="iconClicked('terminal')">
+            <div class="icon">🖥️</div>
+            <div>Terminal</div>
+        </div>
+        
+        <div class="desktop-icon" onclick="iconClicked('files')">
+            <div class="icon">📁</div>
+            <div>Files</div>
+        </div>
+        
+        <div class="desktop-icon" onclick="iconClicked('calculator')">
+            <div class="icon">🧮</div>
+            <div>Calculator</div>
+        </div>
+        
+        <div class="desktop-icon" onclick="iconClicked('games')">
+            <div class="icon">🎮</div>
+            <div>Games</div>
+        </div>
+    </div>
+
+    <!-- Windows -->
+    <div class="window" id="terminal-window" style="left: 100px; top: 100px;">
+        <div class="window-header">
+            Terminal
+            <button class="close-btn" onclick="closeWindow('terminal-window')">×</button>
+        </div>
+        <div style="background: #000; color: #0f0; padding: 15px; font-family: monospace;">
+            <div>Kronos OS Terminal v1.0</div>
+            <div>$ Welcome to Kronos OS</div>
+            <div>$ Type 'help' for available commands</div>
+            <div>$ <span style="animation: blink 1s infinite;">_</span></div>
+        </div>
+    </div>
+
+    <div class="window" id="files-window" style="left: 200px; top: 150px;">
+        <div class="window-header">
+            File Manager
+            <button class="close-btn" onclick="closeWindow('files-window')">×</button>
+        </div>
+        <div>
+            <h3>📁 File Manager</h3>
+            <div style="border: 1px solid #ccc; padding: 10px; margin: 10px 0;">
+                <div>📁 Documents</div>
+                <div>📁 Downloads</div>
+                <div>📁 Pictures</div>
+                <div>📄 readme.txt</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="calculator-window" style="left: 300px; top: 200px;">
+        <div class="window-header">
+            Calculator
+            <button class="close-btn" onclick="closeWindow('calculator-window')">×</button>
+        </div>
+        <div style="text-align: center;">
+            <div style="background: #000; color: white; padding: 10px; margin-bottom: 10px; text-align: right; font-size: 24px;">0</div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;">
+                <button style="padding: 15px;">7</button>
+                <button style="padding: 15px;">8</button>
+                <button style="padding: 15px;">9</button>
+                <button style="padding: 15px;">÷</button>
+                <button style="padding: 15px;">4</button>
+                <button style="padding: 15px;">5</button>
+                <button style="padding: 15px;">6</button>
+                <button style="padding: 15px;">×</button>
+                <button style="padding: 15px;">1</button>
+                <button style="padding: 15px;">2</button>
+                <button style="padding: 15px;">3</button>
+                <button style="padding: 15px;">-</button>
+                <button style="padding: 15px; grid-column: span 2;">0</button>
+                <button style="padding: 15px;">.</button>
+                <button style="padding: 15px;">+</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="window" id="games-window" style="left: 400px; top: 250px;">
+        <div class="window-header">
+            Games
+            <button class="close-btn" onclick="closeWindow('games-window')">×</button>
+        </div>
+        <div>
+            <h3>🎮 Game Center</h3>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+                <div style="border: 1px solid #ccc; padding: 15px; text-align: center; cursor: pointer;">
+                    <div style="font-size: 24px;">🐍</div>
+                    <div>Snake</div>
+                </div>
+                <div style="border: 1px solid #ccc; padding: 15px; text-align: center; cursor: pointer;">
+                    <div style="font-size: 24px;">🧩</div>
+                    <div>Tetris</div>
+                </div>
+                <div style="border: 1px solid #ccc; padding: 15px; text-align: center; cursor: pointer;">
+                    <div style="font-size: 24px;">🏓</div>
+                    <div>Pong</div>
+                </div>
+                <div style="border: 1px solid #ccc; padding: 15px; text-align: center; cursor: pointer;">
+                    <div style="font-size: 24px;">💣</div>
+                    <div>Minesweeper</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function updateStatus(message) {
+            const status = document.getElementById('status');
+            const timestamp = new Date().toLocaleTimeString();
+            status.innerHTML = `Status: ${message}<br>Time: ${timestamp}<br>Click icons or buttons to test`;
+            console.log(`[${timestamp}] ${message}`);
+        }
+
+        function testFunction() {
+            alert('JavaScript is working!');
+            updateStatus('JavaScript test successful');
+        }
+
+        function iconClicked(appName) {
+            updateStatus(`Icon clicked: ${appName}`);
+            alert(`You clicked the ${appName} icon!`);
+            openWindow(appName);
+        }
+
+        function openWindow(appName) {
+            updateStatus(`Opening ${appName}...`);
+            
+            const windowId = appName + '-window';
+            const windowElement = document.getElementById(windowId);
+            
+            if (windowElement) {
+                // Close all other windows first
+                closeAllWindows();
+                
+                // Show this window
+                windowElement.classList.add('show');
+                windowElement.style.display = 'block';
+                windowElement.style.zIndex = '1000';
+                
+                updateStatus(`${appName} opened successfully!`);
+                console.log(`Window ${windowId} opened`);
+            } else {
+                updateStatus(`${appName} window not found!`);
+                alert(`Window ${windowId} not found!`);
+                console.error(`Window ${windowId} not found`);
+            }
+        }
+
+        function closeWindow(windowId) {
+            const windowElement = document.getElementById(windowId);
+            if (windowElement) {
+                windowElement.classList.remove('show');
+                windowElement.style.display = 'none';
+                updateStatus(`Window ${windowId} closed`);
+            }
+        }
+
+        function closeAllWindows() {
+            const windows = document.querySelectorAll('.window');
+            windows.forEach(window => {
+                window.classList.remove('show');
+                window.style.display = 'none';
+            });
+            updateStatus('All windows closed');
+        }
+
+        // Initialize
+        updateStatus('System ready');
+        console.log('Kronos OS Simple Test loaded');
+    </script>
+</body>
+</html>
