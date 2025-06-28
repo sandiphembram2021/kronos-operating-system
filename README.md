@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Kronos OS - A Modern 64-bit Operating System
 
 Kronos OS is a lightweight, modular, and high-performance 64-bit operating system built from scratch in C and x86_64 Assembly.
@@ -235,3 +236,6 @@ Version: 1.0
 ---
 
 *Kronos OS - Building the future, one instruction at a time.*
+=======
+# kronos-operating-system
+>>>>>>> 2b309e7dc5d8c69c18e227134f04c66fd9c77be2
